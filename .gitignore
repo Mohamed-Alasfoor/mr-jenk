@@ -1,0 +1,10 @@
+**/target/
+*.class
+.mvn/
+.settings/
+.classpath
+.project
+.factorypath
+node_modules/
+**/dist/
+jenkins/jenkins-data/
