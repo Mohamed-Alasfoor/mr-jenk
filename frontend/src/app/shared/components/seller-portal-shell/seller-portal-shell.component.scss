@@ -1,0 +1,230 @@
+.seller-shell {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 1.6rem;
+  align-items: start;
+}
+
+.seller-sidebar {
+  position: sticky;
+  top: 7.1rem;
+  display: grid;
+  gap: 1.5rem;
+  padding: 1.6rem;
+}
+
+.sidebar-intro {
+  display: grid;
+  gap: 0.35rem;
+
+  p {
+    margin: 0;
+    color: var(--color-text-tertiary);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+}
+
+.sidebar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.04em;
+}
+
+.brand-mark {
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 0.95rem;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.42), transparent 55%),
+    var(--gradient-accent);
+  box-shadow: var(--shadow-glow);
+}
+
+.sidebar-nav {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.sidebar-link,
+.sidebar-logout {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 3.35rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1.3rem;
+  color: var(--color-text-secondary);
+  transition: background-color 180ms ease, color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+
+.sidebar-link:hover,
+.sidebar-link.active {
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow-neu-sm), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  color: var(--color-text-primary);
+  transform: translateX(4px);
+}
+
+.sidebar-logout.btn-danger {
+  color: var(--color-text-inverted);
+  background: var(--gradient-danger);
+  border: 1px solid rgba(var(--color-accent-danger-rgb), 0.3);
+  box-shadow:
+    0 18px 36px rgba(var(--color-accent-danger-rgb), 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.sidebar-logout.btn-danger:hover {
+  background: var(--gradient-danger);
+  color: var(--color-text-inverted);
+  border-color: rgba(var(--color-accent-danger-rgb), 0.42);
+  transform: translateX(4px);
+  box-shadow:
+    0 24px 42px rgba(var(--color-accent-danger-rgb), 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.sidebar-support {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(129, 152, 214, 0.18);
+}
+
+.sidebar-cta {
+  width: 100%;
+  justify-content: center;
+}
+
+.seller-card {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: center;
+  padding: 1rem;
+}
+
+.seller-avatar {
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: rgba(20, 17, 13, 0.08);
+  box-shadow: var(--shadow-neu-sm), var(--shadow-inset);
+
+  app-media-image {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+}
+
+.avatar-fallback {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.seller-copy {
+  min-width: 0;
+  display: grid;
+  gap: 0.18rem;
+
+  strong {
+    color: var(--color-text-primary);
+    font-size: 1rem;
+  }
+
+  span {
+    color: var(--color-text-tertiary);
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+}
+
+.storefront-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.3rem;
+  color: var(--color-accent-primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.seller-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: end;
+  margin-bottom: 2rem;
+  padding: 1.8rem 2rem;
+  animation: riseIn 360ms var(--ease-out-expo);
+}
+
+.header-copy {
+  max-width: 56rem;
+
+  h1 {
+    margin: 0.45rem 0 0.7rem;
+    font-size: clamp(2.6rem, 2rem + 1.8vw, 4rem);
+    line-height: 0.94;
+  }
+
+  p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 1.02rem;
+    line-height: 1.7;
+  }
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.8rem;
+}
+
+.seller-content {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (max-width: 1100px) {
+  .seller-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .seller-sidebar {
+    position: relative;
+    top: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .seller-header {
+    flex-direction: column;
+    align-items: start;
+    padding: 1.35rem;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

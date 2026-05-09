@@ -1,0 +1,29 @@
+<a [routerLink]="['/products', product.id]" class="product-card">
+  <div class="card-image-wrapper">
+    <span class="badge" *ngIf="product.quantity === 0">Sold Out</span>
+    <span class="badge low-stock" *ngIf="product.quantity > 0 && product.quantity < 5">Low Stock</span>
+
+    <app-media-image
+      [src]="primaryImageUrl"
+      [alt]="product.name"
+      loading="lazy"
+      decoding="async"
+      [fallbackIconSize]="44">
+    </app-media-image>
+  </div>
+
+  <div class="card-content">
+    <span class="card-kicker">{{ stockLabel }}</span>
+    <div class="card-header">
+      <h3 class="product-name" [title]="product.name">{{ product.name }}</h3>
+      <span class="product-price">{{ product.price | currency:'USD':'symbol':'1.0-2' }}</span>
+    </div>
+
+    <p class="product-description">{{ product.description }}</p>
+
+    <div class="product-meta">
+      <span>{{ product.quantity }} in stock</span>
+      <span>{{ product.updatedAt | date:'mediumDate' }}</span>
+    </div>
+  </div>
+</a>

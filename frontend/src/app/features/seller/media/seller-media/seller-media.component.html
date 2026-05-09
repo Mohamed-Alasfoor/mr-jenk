@@ -1,0 +1,273 @@
+<div class="page-container">
+  <app-seller-portal-shell
+    kicker="Photo Library"
+    title="Media Library"
+    description="Upload product photos, keep them organized, and choose where they appear in your shop."
+    sidebarActionLabel="Back To Inventory"
+    sidebarActionLink="/seller/products">
+
+    <div portal-actions>
+      <a href="#upload-panel" class="btn-primary">Upload Photos</a>
+    </div>
+
+    <section class="media-summary">
+      <article class="summary-card glass">
+        <span class="metric-label">Visible photos</span>
+        <strong>{{ isMediaLoading ? '...' : visibleAssetCount }}</strong>
+      </article>
+      <article class="summary-card glass">
+        <span class="metric-label">Assigned</span>
+        <strong>{{ isMediaLoading ? '...' : assignedAssetCount }}</strong>
+      </article>
+      <article class="summary-card glass">
+        <span class="metric-label">Unassigned</span>
+        <strong>{{ isMediaLoading ? '...' : unassignedAssetCount }}</strong>
+      </article>
+      <article class="summary-card glass accent">
+        <span class="metric-label">Products</span>
+        <strong>{{ productsLoaded ? products.length : '...' }}</strong>
+      </article>
+    </section>
+
+    <div class="media-layout">
+      <aside class="upload-col">
+        <section class="panel glass upload-panel" id="upload-panel">
+          <div class="panel-heading">
+            <span class="section-kicker">Upload</span>
+            <h2>New photo</h2>
+            <p>Choose a product now or leave the photo in your library until you are ready to use it.</p>
+          </div>
+
+          <div class="field-stack">
+            <label class="field-label" for="upload-target">Default assignment</label>
+            <select
+              id="upload-target"
+              class="assignment-input"
+              #uploadTarget
+              (change)="onUploadTargetChange(uploadTarget.value)">
+              <option value="">Keep unassigned</option>
+              <option *ngFor="let product of products" [value]="product.id">
+                {{ product.name }}
+              </option>
+            </select>
+          </div>
+
+          <app-file-upload
+            (filesSelected)="onFilesSelected($event)"
+            [maxSizeBytes]="maxUploadSizeBytes"
+            [maxFiles]="maxBatchUploads"
+            [multiple]="true"
+            [isUploading]="isUploading"
+            [uploadProgress]="uploadProgress"
+            [progressLabel]="uploadProgressLabel"
+            title="Drop images here"
+            description="Up to 4 images per batch, 2 MB each."
+            buttonLabel="Choose files">
+          </app-file-upload>
+
+          <div class="guidance-list">
+            <div class="guidance-item">
+              <span class="guidance-title">Instant updates</span>
+              <p>When you attach a photo to a product, it shows up on that product page right away.</p>
+            </div>
+            <div class="guidance-item">
+              <span class="guidance-title">Save for later</span>
+              <p>You can keep photos in your library until you are ready to place them on a listing.</p>
+            </div>
+            <div class="guidance-item">
+              <span class="guidance-title">Clean removals</span>
+              <p>Removing a photo here also removes it from the product page where it appears.</p>
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="gallery-col">
+        <div class="panel glass gallery-panel">
+          <div class="toolbar">
+            <div class="panel-heading">
+              <span class="section-kicker">Library</span>
+              <h2>Your photos</h2>
+              <p>Search by file name or product, then place, copy, or remove photos.</p>
+            </div>
+
+            <div class="toolbar-controls">
+              <label class="toolbar-search">
+                <lucide-icon [img]="SearchIcon" size="16"></lucide-icon>
+                <input type="text" [(ngModel)]="librarySearch" placeholder="Search photo or product">
+              </label>
+
+              <div class="toolbar-field">
+                <label class="field-label" for="product-filter">Filter</label>
+                <select
+                  id="product-filter"
+                  class="assignment-input"
+                  #productFilter
+                  (change)="onFilterChange(productFilter.value)">
+                  <option value="">All products</option>
+                  <option *ngFor="let product of products" [value]="product.id">
+                    {{ product.name }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="gallery-loading" *ngIf="isMediaLoading">
+            <app-loading-spinner [compact]="true"></app-loading-spinner>
+            <p>Loading your photo library...</p>
+          </div>
+
+          <div class="empty-gallery" *ngIf="!isMediaLoading && visibleMediaItems.length === 0">
+            <div class="empty-icon">
+              <lucide-icon [img]="ImageIconIcon" size="28"></lucide-icon>
+            </div>
+            <h3>No matching photos</h3>
+            <p>Your uploaded photos will appear here once you add them to the library.</p>
+          </div>
+
+          <div class="media-grid" *ngIf="!isMediaLoading && visibleMediaItems.length > 0">
+            <article class="media-item" *ngFor="let media of visibleMediaItems; trackBy: trackByMediaId">
+              <div class="media-preview">
+                <app-media-image [src]="media.url" [alt]="media.filename" loading="lazy"></app-media-image>
+              </div>
+
+              <div class="media-body">
+                <div class="media-meta">
+                  <div class="media-name-block">
+                    <strong class="media-name" [title]="media.filename">{{ media.filename }}</strong>
+                    <span class="media-subline" [title]="getProductName(media.productId)">{{ getProductName(media.productId) }}</span>
+                  </div>
+                  <span class="media-size">{{ (media.sizeBytes / 1024) | number:'1.0-0' }} KB</span>
+                </div>
+
+                <div class="media-footer">
+                  <span class="status-chip" [class.assigned]="media.productId" [class.unassigned]="!media.productId">
+                    {{ media.productId ? 'Assigned' : 'Unassigned' }}
+                  </span>
+
+                  <div class="preview-actions">
+                    <button
+                      class="icon-btn assign-btn"
+                      type="button"
+                      [class.assigned]="media.productId"
+                      [disabled]="isAssignmentSaving(media.id)"
+                      (click)="openAssignmentModal(media)"
+                      [title]="media.productId ? 'Change assignment' : 'Assign to product'">
+                      <lucide-icon [img]="Link2Icon" size="15"></lucide-icon>
+                    </button>
+                    <button
+                      class="icon-btn"
+                      type="button"
+                      (click)="copyUrl(media.url, media.id)"
+                      [title]="copiedId === media.id ? 'Copied' : 'Copy URL'">
+                      <lucide-icon [img]="copiedId === media.id ? CheckCircle2Icon : CopyIcon" size="15"></lucide-icon>
+                    </button>
+                    <button
+                      class="icon-btn delete-btn"
+                      type="button"
+                      (click)="confirmDeleteMedia(media)"
+                      title="Delete photo">
+                      <lucide-icon [img]="Trash2Icon" size="15"></lucide-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="assignment-modal-backdrop" *ngIf="assignmentModalMedia" (click)="closeAssignmentModal()">
+      <div class="assignment-modal glass" (click)="$event.stopPropagation()">
+        <div class="assignment-modal-header">
+          <div>
+            <span class="section-kicker">Assignment</span>
+            <h3>Select a product</h3>
+            <p>Search for a product, then choose where this photo should appear.</p>
+          </div>
+          <button class="modal-close" type="button" (click)="closeAssignmentModal()" title="Close">
+            <lucide-icon [img]="XIcon" size="18"></lucide-icon>
+          </button>
+        </div>
+
+        <div class="assignment-modal-preview" *ngIf="assignmentModalMedia as activeMedia">
+          <app-media-image [src]="activeMedia.url" [alt]="activeMedia.filename" loading="eager"></app-media-image>
+          <div class="assignment-modal-meta">
+            <strong>{{ activeMedia.filename }}</strong>
+            <span>Now on: {{ getProductName(activeMedia.productId) }}</span>
+          </div>
+        </div>
+
+        <div class="assignment-search">
+          <lucide-icon [img]="SearchIcon" size="16"></lucide-icon>
+          <input
+            type="text"
+            [(ngModel)]="assignmentSearch"
+            placeholder="Search products">
+        </div>
+
+        <div class="assignment-results" *ngIf="productsLoaded; else modalLoading">
+          <button
+            class="assignment-option unassigned-option"
+            type="button"
+            [disabled]="!assignmentModalMedia || isAssignmentSaving(assignmentModalMedia.id)"
+            (click)="assignFromModal(null)">
+            <span class="assignment-option-copy">
+              <strong>Keep unassigned</strong>
+              <span>The asset stays in the library without appearing on a product page.</span>
+            </span>
+            <span class="assignment-option-tag">No product</span>
+          </button>
+
+          <button
+            class="assignment-option"
+            type="button"
+            *ngIf="assignmentModalMedia?.productId && !hasProduct(assignmentModalMedia?.productId)"
+            [disabled]="!assignmentModalMedia || isAssignmentSaving(assignmentModalMedia.id)"
+            (click)="assignFromModal(assignmentModalMedia ? assignmentModalMedia.productId : null)">
+            <span class="assignment-option-copy">
+              <strong>Current product unavailable</strong>
+              <span>This photo is linked to a product that is not shown in your list right now.</span>
+            </span>
+            <span class="assignment-option-tag">Current</span>
+          </button>
+
+          <button
+            class="assignment-option"
+            type="button"
+            *ngFor="let product of filteredProducts"
+            [disabled]="!assignmentModalMedia || isAssignmentSaving(assignmentModalMedia.id)"
+            (click)="assignFromModal(product.id)">
+            <span class="assignment-option-copy">
+              <strong>{{ product.name }}</strong>
+              <span>{{ product.imageUrls.length }} image{{ product.imageUrls.length === 1 ? '' : 's' }} currently attached</span>
+            </span>
+            <span class="assignment-option-tag">Product</span>
+          </button>
+
+          <div class="assignment-empty" *ngIf="filteredProducts.length === 0">
+            No products match "{{ assignmentSearch }}".
+          </div>
+        </div>
+
+        <ng-template #modalLoading>
+          <div class="assignment-loading">
+            <app-loading-spinner [compact]="true" [size]="24"></app-loading-spinner>
+            <span>Loading products...</span>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  </app-seller-portal-shell>
+</div>
+
+<app-confirm-dialog
+  [isOpen]="isDeleteConfirmOpen"
+  [title]="mediaToDelete ? 'Delete ' + mediaToDelete.filename + '?' : 'Delete Image?'"
+  [message]="deleteMediaMessage"
+  confirmText="Delete Image"
+  (confirm)="onDeleteConfirmed()"
+  (cancel)="onDeleteCancelled()">
+</app-confirm-dialog>

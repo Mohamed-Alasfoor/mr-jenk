@@ -1,0 +1,121 @@
+<div class="page-container">
+  <app-seller-portal-shell
+    kicker="Shop Listings"
+    title="Product Catalog"
+    description="Manage your listings, update prices and stock, and keep product photos ready for shoppers."
+    sidebarActionLabel="Add Product"
+    sidebarActionLink="/seller/products/new">
+
+    <div portal-actions>
+      <a routerLink="/seller/products/new" class="btn-primary">Create New Listing</a>
+    </div>
+
+    <section class="stats-grid" *ngIf="!isLoading">
+      <article class="stat-card glass">
+        <span>Total products</span>
+        <strong>{{ products.length }}</strong>
+      </article>
+      <article class="stat-card glass">
+        <span>Items in stock</span>
+        <strong>{{ totalInventoryUnits }}</strong>
+      </article>
+      <article class="stat-card glass">
+        <span>Inventory value</span>
+        <strong>{{ totalInventoryValue | currency:'USD':'symbol':'1.0-0' }}</strong>
+      </article>
+      <article class="stat-card glass">
+        <span>Low stock items</span>
+        <strong>{{ lowStockCount }}</strong>
+      </article>
+    </section>
+
+    <section class="inventory-card glass">
+      <div class="loading-state" *ngIf="isLoading">
+        <div class="skeleton-row" *ngFor="let _ of skeletonArray">
+          <app-skeleton type="text"></app-skeleton>
+          <app-skeleton type="text"></app-skeleton>
+        </div>
+      </div>
+
+      <div class="empty-state-wrapper" *ngIf="!isLoading && products.length === 0">
+        <app-empty-state
+          heading="No Products Yet"
+          description="Your shop does not have any listings yet.">
+        </app-empty-state>
+        <a routerLink="/seller/products/new" class="btn-primary empty-action">Create Listing</a>
+      </div>
+
+      <div class="table-shell" *ngIf="!isLoading && products.length > 0">
+        <div class="table-responsive">
+          <table class="inventory-table">
+            <thead>
+              <tr>
+                <th>Product Details</th>
+                <th>Images</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Status</th>
+                <th>Updated</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let product of products">
+                <td class="product-col">
+                  <a [routerLink]="['/products', product.id]" class="product-link" [attr.aria-label]="'Open product page for ' + product.name">
+                    <div class="thumb">
+                      <app-media-image *ngIf="product.imageUrls?.length" [src]="product.imageUrls[0]" [alt]="product.name" loading="lazy"></app-media-image>
+                      <div class="thumb-fallback" *ngIf="!product.imageUrls?.length">
+                        <lucide-icon [img]="CameraOffIcon" size="18"></lucide-icon>
+                      </div>
+                    </div>
+
+                    <div class="details">
+                      <strong>{{ product.name }}</strong>
+                      <span>ID {{ product.id | slice:0:8 }}</span>
+                    </div>
+                  </a>
+                </td>
+                <td>{{ product.imageUrls.length }}</td>
+                <td>{{ product.quantity }}</td>
+                <td>{{ product.price | currency:'USD':'symbol':'1.0-2' }}</td>
+                <td>
+                  <span class="status-pill" [class.available]="product.quantity >= 5" [class.low]="product.quantity > 0 && product.quantity < 5" [class.out]="product.quantity === 0">
+                    {{ product.quantity === 0 ? 'Sold out' : (product.quantity < 5 ? 'Low stock' : 'In stock') }}
+                  </span>
+                </td>
+                <td>{{ product.updatedAt | date:'MMM dd, yyyy' }}</td>
+                <td class="actions-col text-right">
+                  <a
+                    [routerLink]="['/seller/products', product.id, 'edit']"
+                    class="table-action icon-table-action"
+                    [attr.aria-label]="'Edit ' + product.name"
+                    title="Edit product">
+                    <lucide-icon [img]="PencilIcon" size="16"></lucide-icon>
+                  </a>
+                  <button
+                    type="button"
+                    class="table-action icon-table-action danger"
+                    (click)="confirmDelete(product.id)"
+                    [attr.aria-label]="'Delete ' + product.name"
+                    title="Delete product">
+                    <lucide-icon [img]="Trash2Icon" size="16"></lucide-icon>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </app-seller-portal-shell>
+</div>
+
+<app-confirm-dialog
+  [isOpen]="isConfirmOpen"
+  title="Delete Product?"
+  message="Are you sure you want to permanently delete this product? This action cannot be undone."
+  confirmText="Delete Permanently"
+  (confirm)="onDeleteConfirmed()"
+  (cancel)="onDeleteCancelled()">
+</app-confirm-dialog>

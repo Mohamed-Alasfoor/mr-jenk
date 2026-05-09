@@ -1,0 +1,144 @@
+<div class="page-container">
+  <app-seller-portal-shell
+    kicker="Product Details"
+    [title]="isEditMode ? 'Edit Product' : 'Create Product'"
+    description="Add the details shoppers need, including a clear title, price, stock, description, and photos."
+    sidebarActionLabel="Back To Inventory"
+    sidebarActionLink="/seller/products">
+
+    <div portal-actions>
+      <a routerLink="/seller/products" class="btn-soft">Back To Inventory</a>
+    </div>
+
+    <div *ngIf="isLoading" class="loading-overlay glass">
+      <app-loading-spinner></app-loading-spinner>
+    </div>
+
+    <div class="form-layout" *ngIf="!isLoading">
+      <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="workspace-card glass">
+        <div class="card-heading">
+          <div>
+            <span class="section-kicker">Listing Details</span>
+            <h2>Product information</h2>
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Product Name</label>
+          <input
+            type="text"
+            formControlName="name"
+            placeholder="Enter the listing title"
+            [attr.maxlength]="maxProductNameLength"
+            [class.invalid]="isInvalid('name')">
+          <div class="field-note">
+            <span class="error-text" *ngIf="productForm.get('name')?.hasError('maxlength') && isInvalid('name')">
+              Product name must be 150 characters or fewer.
+            </span>
+            <span class="char-count">{{ (productForm.get('name')?.value?.length || 0) }} / {{ maxProductNameLength }}</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Price (USD)</label>
+            <input type="number" formControlName="price" placeholder="0.00" step="0.01" min="0" [class.invalid]="isInvalid('price')">
+          </div>
+          <div class="form-group">
+            <label>Available Stock</label>
+            <input type="number" formControlName="quantity" placeholder="1" min="0" [class.invalid]="isInvalid('quantity')">
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Description</label>
+          <textarea formControlName="description" rows="7" placeholder="Describe the product..." [class.invalid]="isInvalid('description')"></textarea>
+        </div>
+
+        <div class="support-panel">
+          <article>
+            <span class="field-chip">Listing essentials</span>
+            <strong>Title, description, price, stock, photos</strong>
+          </article>
+          <article>
+            <span class="field-chip">Image limit</span>
+            <strong>{{ uploadedImages.length }} / {{ maxImages }}</strong>
+          </article>
+        </div>
+
+        <div class="form-actions">
+          <a routerLink="/seller/products" class="btn-soft">Cancel</a>
+          <button type="submit" class="btn-primary" [disabled]="isSubmitting || isUploading">
+            <span *ngIf="!isSubmitting">{{ isEditMode ? 'Save Changes' : 'Publish Listing' }}</span>
+            <span *ngIf="isSubmitting" class="spinner-inline"></span>
+          </button>
+        </div>
+      </form>
+
+      <div class="workspace-card glass media-card">
+        <div class="card-heading">
+          <div>
+            <span class="section-kicker">Image Library</span>
+            <h2>Attached visuals</h2>
+          </div>
+        </div>
+
+        <p class="subtitle">
+          Upload up to {{ maxImages }} product images. They will appear on the listing after you save.
+        </p>
+
+        <div class="image-previews">
+          <div class="preview-slot" *ngFor="let img of uploadedImages; let i = index">
+            <app-media-image [src]="img" alt="Product image" loading="lazy"></app-media-image>
+            <button class="remove-btn" type="button" [disabled]="isUploading" (click)="confirmRemoveImage(i)">
+              <lucide-icon [img]="Trash2Icon" size="14"></lucide-icon>
+            </button>
+          </div>
+
+          <div class="preview-empty" *ngIf="uploadedImages.length === 0">
+            <lucide-icon [img]="CameraOffIcon" size="24"></lucide-icon>
+            <span>No images uploaded yet</span>
+          </div>
+        </div>
+
+        <app-file-upload
+          (filesSelected)="onFilesSelected($event)"
+          [maxSizeBytes]="maxUploadSizeBytes"
+          [maxFiles]="remainingImageSlots"
+          [multiple]="true"
+          [disabled]="remainingImageSlots === 0"
+          [isUploading]="isUploading"
+          [uploadProgress]="uploadProgress"
+          [progressLabel]="uploadProgressLabel"
+          [title]="uploadTitle"
+          [description]="uploadDescription"
+          [buttonLabel]="uploadButtonLabel">
+        </app-file-upload>
+
+        <div class="status-box">
+          <div class="status-row">
+            <span>Attached images</span>
+            <strong>{{ uploadedImages.length }} / {{ maxImages }}</strong>
+          </div>
+          <div class="status-row">
+            <span>Batch selection</span>
+            <strong>Up to {{ remainingImageSlots }} now</strong>
+          </div>
+          <div class="status-row">
+            <span>Photo placement</span>
+            <strong>{{ isEditMode ? 'Updates this listing' : 'Added when you publish' }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </app-seller-portal-shell>
+</div>
+
+<app-confirm-dialog
+  [isOpen]="isRemoveImageConfirmOpen"
+  title="Remove Image?"
+  [message]="removeImageMessage"
+  confirmText="Remove Image"
+  (confirm)="onRemoveImageConfirmed()"
+  (cancel)="onRemoveImageCancelled()">
+</app-confirm-dialog>

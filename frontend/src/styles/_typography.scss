@@ -1,0 +1,39 @@
+/* styles/_typography.scss */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap');
+
+html {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  @include body-style;
+  color: var(--color-text-secondary);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @include heading-style;
+  color: var(--color-text-primary);
+}
+
+strong,
+b {
+  color: var(--color-text-primary);
+}
+
+.text-xs { @include text-xs; }
+.text-sm { @include text-sm; }
+.text-base { @include text-base; }
+.text-lg { @include text-lg; }
+.text-xl { @include text-xl; }
+.text-2xl { @include text-2xl; }
+.text-3xl { @include text-3xl; }
+.text-4xl { @include text-4xl; }
+.text-5xl { @include text-5xl; }

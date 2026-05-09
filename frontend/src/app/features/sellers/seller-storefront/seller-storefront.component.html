@@ -1,0 +1,97 @@
+<div class="page-container" *ngIf="isLoadingSeller && !isNotFound">
+  <section class="storefront-hero glass">
+    <div class="hero-main">
+      <div class="hero-avatar loading-block"></div>
+      <div class="hero-copy">
+        <div class="loading-line short"></div>
+        <div class="loading-line title"></div>
+        <div class="loading-line body"></div>
+      </div>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat-card loading-block"></div>
+      <div class="stat-card loading-block"></div>
+    </div>
+  </section>
+
+  <div class="products-grid">
+    <app-skeleton *ngFor="let _ of skeletonArray" type="product"></app-skeleton>
+  </div>
+</div>
+
+<div class="page-container not-found" *ngIf="isNotFound">
+  <div class="glass state-card">
+    <h2>Seller not found</h2>
+    <p>This seller profile is not available.</p>
+    <a routerLink="/products" class="btn-primary">Browse products</a>
+  </div>
+</div>
+
+<div class="page-container not-found" *ngIf="hasLoadError && !isLoadingSeller && !isNotFound">
+  <div class="glass state-card">
+    <h2>Seller profile unavailable</h2>
+    <p>We could not load this seller profile right now.</p>
+    <a routerLink="/products" class="btn-primary">Browse products</a>
+  </div>
+</div>
+
+<div class="page-container storefront-page" *ngIf="seller && !isLoadingSeller && !isNotFound && !hasLoadError">
+  <section class="storefront-hero glass scroll-reveal">
+    <div class="hero-main">
+      <div class="hero-avatar">
+        <ng-container *ngIf="seller.avatarUrl; else sellerInitials">
+          <app-media-image [src]="seller.avatarUrl || null" [alt]="seller.fullName" loading="eager"></app-media-image>
+        </ng-container>
+
+        <ng-template #sellerInitials>
+          <div class="avatar-fallback">{{ sellerInitial }}</div>
+        </ng-template>
+      </div>
+
+      <div class="hero-copy">
+        <span class="section-kicker">Seller Storefront</span>
+        <h1>{{ seller.fullName }}</h1>
+        <p>Explore everything this seller currently has available in one place.</p>
+      </div>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat-card">
+        <strong>{{ products.length }}</strong>
+        <span>{{ products.length === 1 ? 'Product' : 'Products' }}</span>
+      </div>
+      <div class="stat-card">
+        <strong>{{ productsWithImagesCount }}</strong>
+        <span>With images</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="catalog-section">
+    <div class="section-header">
+      <div>
+        <span class="section-kicker">Shop Collection</span>
+        <h2>{{ seller.fullName }}'s collection</h2>
+      </div>
+      <a routerLink="/products" class="section-link">Browse all products</a>
+    </div>
+
+    <div class="products-grid" *ngIf="isLoadingProducts">
+      <app-skeleton *ngFor="let _ of skeletonArray" type="product"></app-skeleton>
+    </div>
+
+    <div class="products-grid" *ngIf="!isLoadingProducts && products.length > 0">
+      <div class="scroll-reveal" *ngFor="let product of products; trackBy: trackByProductId">
+        <app-product-card [product]="product"></app-product-card>
+      </div>
+    </div>
+
+    <div class="empty-container" *ngIf="!isLoadingProducts && products.length === 0">
+      <app-empty-state
+        heading="No Products Yet"
+        description="This shop has not listed any products yet.">
+      </app-empty-state>
+    </div>
+  </section>
+</div>

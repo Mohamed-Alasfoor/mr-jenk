@@ -1,0 +1,49 @@
+server:
+  port: 8082
+  ssl:
+    enabled: ${SERVER_SSL_ENABLED:false}
+    key-store: ${SERVER_SSL_KEY_STORE:}
+    key-store-password: ${SERVER_SSL_KEY_STORE_PASSWORD:}
+    key-store-type: ${SERVER_SSL_KEY_STORE_TYPE:PKCS12}
+    key-alias: ${SERVER_SSL_KEY_ALIAS:buy01-dev}
+
+spring:
+  application:
+    name: product-service
+  data:
+    mongodb:
+      uri: ${PRODUCT_SERVICE_MONGODB_URI:mongodb://localhost:27017/product_service_db}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka}
+  instance:
+    secure-port-enabled: ${SERVER_SSL_ENABLED:false}
+    non-secure-port-enabled: ${EUREKA_NON_SECURE_PORT_ENABLED:true}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:changeit-changeit-changeit-changeit-changeit-1234567890}
+
+app:
+  services:
+    media:
+      base-url: ${MEDIA_SERVICE_INTERNAL_BASE_URL:http://localhost:8083}
+  kafka:
+    enabled: ${KAFKA_ENABLED:false}
+    topics:
+      products: ${KAFKA_PRODUCTS_TOPIC:product-events}

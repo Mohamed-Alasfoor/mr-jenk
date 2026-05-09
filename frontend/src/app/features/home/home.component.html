@@ -1,0 +1,127 @@
+<div class="page-container home-page">
+  <section class="hero-grid">
+    <div class="hero-copy glass scroll-reveal">
+      <span class="section-kicker">Marketplace Experience</span>
+      <h1>Find products you'll love.</h1>
+      <p>
+        Explore fresh arrivals, browse seller shops, and discover items that fit your style.
+      </p>
+
+      <div class="hero-actions">
+        <a routerLink="/products" class="btn-primary">Explore Products</a>
+        <a *ngIf="authService.isSeller()" routerLink="/seller/dashboard" class="btn-ghost">Open Seller Studio</a>
+        <a *ngIf="!authService.isSeller()" routerLink="/auth/register" class="btn-ghost">Create Seller Account</a>
+      </div>
+
+      <div class="hero-metrics">
+        <div class="metric-chip">
+          <strong>{{ isLoading ? '...' : featuredProducts.length }}</strong>
+          <span>Featured now</span>
+        </div>
+        <div class="metric-chip">
+          <strong>Fresh</strong>
+          <span>New arrivals</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-showcase scroll-reveal" *ngIf="heroProduct; else homeHeroEmpty">
+      <a class="showcase-frame glass" [routerLink]="['/products', heroProduct.id]">
+        <div class="orb orb-primary"></div>
+        <div class="orb orb-secondary"></div>
+
+        <div class="showcase-image">
+          <app-media-image
+            [src]="heroProduct.imageUrls[0] || null"
+            [alt]="heroProduct.name"
+            loading="eager"
+            [fallbackIconSize]="72">
+          </app-media-image>
+        </div>
+
+        <div class="showcase-card">
+          <span class="field-chip">{{ heroProduct.quantity > 0 ? 'Live Product' : 'Sold Out' }}</span>
+          <h2>{{ heroProduct.name }}</h2>
+          <p>{{ heroProduct.description }}</p>
+          <div class="showcase-meta">
+            <strong>{{ heroProduct.price | currency:'USD':'symbol':'1.0-2' }}</strong>
+            <span>{{ heroProduct.quantity }} in stock</span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <ng-template #homeHeroEmpty>
+      <div class="hero-empty glass scroll-reveal">
+        <span class="section-kicker">Catalog Status</span>
+        <h2>No products are published yet.</h2>
+        <p>As sellers add new items, the latest arrivals will appear here.</p>
+      </div>
+    </ng-template>
+  </section>
+
+  <section class="inventory-section">
+    <div class="section-head scroll-reveal">
+      <div>
+        <span class="section-kicker">Curated Series</span>
+        <h2>New products</h2>
+        <p>Browse a handpicked selection from shops across Shopora.</p>
+      </div>
+      <a routerLink="/products" class="section-link">See full catalog</a>
+    </div>
+
+    <div class="inventory-grid" *ngIf="isLoading">
+      <app-skeleton *ngFor="let _ of skeletonArray" type="product"></app-skeleton>
+    </div>
+
+    <div class="inventory-grid" *ngIf="!isLoading && featuredProducts.length > 0">
+      <div class="inventory-card scroll-reveal" *ngFor="let product of featuredProducts; trackBy: trackByProductId">
+        <app-product-card [product]="product"></app-product-card>
+      </div>
+    </div>
+
+    <div class="empty-card inventory-empty" *ngIf="!isLoading && featuredProducts.length === 0">
+      <h3>No products are live yet</h3>
+      <p>There are no products to show right now. Check back soon for new arrivals.</p>
+    </div>
+  </section>
+
+  <section class="workspace-section glass scroll-reveal">
+    <div class="workspace-visual">
+      <div class="workspace-gradient"></div>
+      <div class="workspace-card">
+        <span class="field-chip">Seller essentials</span>
+        <strong>Listings, photos, profile, shop page</strong>
+      </div>
+    </div>
+
+    <div class="workspace-copy">
+      <span class="section-kicker">Seller Workspace</span>
+      <h2>Run your shop from one place.</h2>
+      <p>
+        Sellers can add products, upload photos, update their profile, and keep their shop ready for customers.
+      </p>
+
+      <div class="workspace-points">
+        <article>
+          <strong>Inventory Hub</strong>
+          <span>Create and update listings with pricing, stock, descriptions, and photos.</span>
+        </article>
+        <article>
+          <strong>Media Library</strong>
+          <span>Upload product photos, organize them, and place them on the right listings.</span>
+        </article>
+        <article>
+          <strong>Seller Identity</strong>
+          <span>Update your shop name and avatar so customers see a consistent brand.</span>
+        </article>
+      </div>
+
+      <div class="hero-actions">
+        <a *ngIf="authService.isSeller()" routerLink="/seller/dashboard" class="btn-primary">Open Studio</a>
+        <a *ngIf="!authService.isSeller()" routerLink="/auth/register" class="btn-primary">Register As Seller</a>
+        <a routerLink="/products" class="btn-ghost">Browse Catalog</a>
+      </div>
+    </div>
+  </section>
+</div>

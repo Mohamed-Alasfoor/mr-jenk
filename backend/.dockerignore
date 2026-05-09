@@ -1,0 +1,9 @@
+**/target
+**/bin
+run-logs
+docs
+*.log
+.git
+.gitignore
+.idea
+.vscode

@@ -1,0 +1,80 @@
+<div class="seller-shell">
+  <aside class="seller-sidebar glass">
+    <div class="sidebar-intro">
+      <a routerLink="/" class="sidebar-brand">
+        <span class="brand-mark"></span>
+        <span>Seller Studio</span>
+      </a>
+      <p>Live tools only</p>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a routerLink="/seller/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="sidebar-link">
+        <lucide-icon [img]="LayoutDashboardIcon" size="18"></lucide-icon>
+        <span>Studio Home</span>
+      </a>
+      <a routerLink="/seller/products" routerLinkActive="active" class="sidebar-link">
+        <lucide-icon [img]="PackageIcon" size="18"></lucide-icon>
+        <span>Inventory</span>
+      </a>
+      <a routerLink="/seller/media" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="sidebar-link">
+        <lucide-icon [img]="ImagesIcon" size="18"></lucide-icon>
+        <span>Media Library</span>
+      </a>
+      <a routerLink="/seller/profile" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="sidebar-link">
+        <lucide-icon [img]="SettingsIcon" size="18"></lucide-icon>
+        <span>Seller Profile</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-support" *ngIf="authService.currentUserValue as user">
+      <a *ngIf="sidebarActionLabel" [routerLink]="sidebarActionLink" class="btn-primary sidebar-cta">{{ sidebarActionLabel }}</a>
+
+      <div class="seller-card glass">
+        <div class="seller-avatar">
+          <app-media-image
+            *ngIf="user.avatarUrl; else sellerFallback"
+            [src]="user.avatarUrl"
+            [alt]="user.fullName"
+            loading="eager">
+          </app-media-image>
+          <ng-template #sellerFallback>
+            <div class="avatar-fallback">{{ user.fullName.charAt(0) | uppercase }}</div>
+          </ng-template>
+        </div>
+
+        <div class="seller-copy">
+          <strong>{{ user.fullName }}</strong>
+          <span>Active seller session</span>
+          <a [routerLink]="['/sellers', user.id]" class="storefront-link">
+            <lucide-icon [img]="StoreIcon" size="14"></lucide-icon>
+            Public storefront
+          </a>
+        </div>
+      </div>
+
+      <button type="button" class="sidebar-logout btn-danger" (click)="logout()">
+        <lucide-icon [img]="LogOutIcon" size="16"></lucide-icon>
+        <span>Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <section class="seller-main">
+    <header class="seller-header glass">
+      <div class="header-copy">
+        <span class="section-kicker" *ngIf="kicker">{{ kicker }}</span>
+        <h1>{{ title }}</h1>
+        <p *ngIf="description">{{ description }}</p>
+      </div>
+
+      <div class="header-actions">
+        <ng-content select="[portal-actions]"></ng-content>
+      </div>
+    </header>
+
+    <div class="seller-content">
+      <ng-content></ng-content>
+    </div>
+  </section>
+</div>

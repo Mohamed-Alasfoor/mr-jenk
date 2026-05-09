@@ -1,0 +1,139 @@
+<div class="auth-shell">
+  <section class="auth-visual">
+    <div class="visual-orb orb-one"></div>
+    <div class="visual-orb orb-two"></div>
+    <div class="visual-content">
+      <span class="section-kicker">Marketplace Access</span>
+      <h1>Shop great finds or open your own store.</h1>
+      <p>
+        Sign in to keep shopping, or create an account to buy from sellers and start selling yourself.
+      </p>
+    </div>
+  </section>
+
+  <section class="auth-panel-wrap">
+    <div class="auth-panel glass">
+      <div class="panel-copy">
+        <span class="section-kicker">{{ activeTab === 'login' ? 'Welcome back' : 'Create your account' }}</span>
+        <h2>{{ activeTab === 'login' ? 'Access Shopora' : 'Join Shopora' }}</h2>
+        <p>
+          {{ activeTab === 'login'
+            ? 'Use your existing email and password to continue.'
+            : 'Choose whether you want to shop or sell, then get started in a few quick steps.' }}
+        </p>
+      </div>
+
+      <div class="tab-switcher">
+        <button type="button" class="tab-btn" [class.active]="activeTab === 'login'" (click)="setTab('login')">Sign In</button>
+        <button type="button" class="tab-btn" [class.active]="activeTab === 'register'" (click)="setTab('register')">Register</button>
+      </div>
+
+      <form *ngIf="activeTab === 'login'" [formGroup]="loginForm" (ngSubmit)="onLoginSubmit()" class="auth-form">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" formControlName="email" placeholder="you@example.com" [class.invalid]="isInvalid(loginForm, 'email')">
+          <div class="error-msg" *ngIf="isInvalid(loginForm, 'email')">
+            <lucide-icon [img]="AlertCircleIcon" size="14"></lucide-icon>
+            <span>Valid email required</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <div class="input-wrapper password-input">
+            <input [type]="showPassword ? 'text' : 'password'" formControlName="password" placeholder="Enter your password" [class.invalid]="isInvalid(loginForm, 'password')">
+            <button type="button" class="toggle-pwd" (click)="togglePassword()">
+              <lucide-icon [img]="showPassword ? EyeOffIcon : EyeIcon" size="18"></lucide-icon>
+            </button>
+          </div>
+        </div>
+
+        <div class="auth-note">
+          <span class="field-chip">Email and password</span>
+          <span class="note-copy">Use the email address and password linked to your Shopora account.</span>
+        </div>
+
+        <button type="submit" class="btn-primary full-width" [disabled]="isSubmitting">
+          <span *ngIf="!isSubmitting">Sign In</span>
+          <span *ngIf="isSubmitting" class="spinner-inline"></span>
+        </button>
+      </form>
+
+      <form *ngIf="activeTab === 'register'" [formGroup]="registerForm" (ngSubmit)="onRegisterSubmit()" class="auth-form">
+        <div class="role-grid">
+          <button type="button" class="role-card" [class.active]="registerForm.get('role')?.value === 'CLIENT'" (click)="setRole('CLIENT')">
+            <lucide-icon [img]="ShoppingBagIcon" size="18"></lucide-icon>
+            <div>
+              <strong>Buyer</strong>
+              <span>Browse products and seller pages.</span>
+            </div>
+          </button>
+
+          <button type="button" class="role-card" [class.active]="registerForm.get('role')?.value === 'SELLER'" (click)="setRole('SELLER')">
+            <lucide-icon [img]="StoreIcon" size="18"></lucide-icon>
+            <div>
+              <strong>Seller</strong>
+              <span>Open your shop, add products, and share your storefront.</span>
+            </div>
+          </button>
+        </div>
+
+        <div class="form-group">
+          <label>Display Name</label>
+          <input type="text" formControlName="fullName" placeholder="e.g. Elena Vance" [class.invalid]="isInvalid(registerForm, 'fullName')">
+          <div class="error-msg" *ngIf="isInvalid(registerForm, 'fullName')">
+            <lucide-icon [img]="AlertCircleIcon" size="14"></lucide-icon>
+            <span>Name requires at least 3 characters</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" formControlName="email" placeholder="name@example.com" [class.invalid]="isInvalid(registerForm, 'email')">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" formControlName="password" placeholder="Minimum 8 characters" [class.invalid]="isInvalid(registerForm, 'password')">
+          </div>
+          <div class="form-group">
+            <label>Confirm Password</label>
+            <input type="password" formControlName="confirmPassword" placeholder="Repeat password" [class.invalid]="isInvalid(registerForm, 'confirmPassword')">
+          </div>
+        </div>
+
+        <div class="error-msg" *ngIf="registerForm.hasError('mismatch') && registerForm.get('confirmPassword')?.touched">
+          <lucide-icon [img]="AlertCircleIcon" size="14"></lucide-icon>
+          <span>Passwords do not match</span>
+        </div>
+
+        <div class="seller-avatar-upload" *ngIf="registerForm.get('role')?.value === 'SELLER'">
+          <label>Seller Avatar</label>
+          <app-file-upload
+            accept="image/*"
+            [maxSizeBytes]="avatarMaxSizeBytes"
+            title="Upload seller avatar"
+            description="Optional. Choose an image up to 2 MB. You can change it later from the seller profile."
+            buttonLabel="Choose avatar"
+            (fileSelected)="onAvatarSelected($event)">
+          </app-file-upload>
+
+          <div class="avatar-preview-card glass" *ngIf="avatarPreviewUrl">
+            <app-media-image [src]="avatarPreviewUrl" alt="Selected seller avatar" loading="eager"></app-media-image>
+            <div class="avatar-preview-content">
+              <strong>{{ selectedAvatarFile?.name }}</strong>
+              <span>{{ (selectedAvatarFile?.size || 0) / 1024 | number:'1.0-0' }} KB</span>
+            </div>
+            <button type="button" class="btn-soft" (click)="clearSelectedAvatar()">Remove</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary full-width" [disabled]="isSubmitting">
+          <span *ngIf="!isSubmitting">Create Account</span>
+          <span *ngIf="isSubmitting" class="spinner-inline"></span>
+        </button>
+      </form>
+    </div>
+  </section>
+</div>

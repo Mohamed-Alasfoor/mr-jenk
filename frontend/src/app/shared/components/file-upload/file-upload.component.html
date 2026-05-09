@@ -1,0 +1,30 @@
+<div class="upload-zone glass" 
+     [class.dragging]="isDragging"
+     [class.uploading]="isUploading"
+     [class.disabled]="disabled"
+     (dragover)="onDragOver($event)"
+     (dragleave)="onDragLeave($event)"
+     (drop)="onDrop($event)"
+     (click)="!isInteractionDisabled && fileInput.click()">
+     
+  <div class="upload-content" *ngIf="!isUploading">
+    <div class="upload-icon">
+      <lucide-icon [img]="UploadCloudIcon" size="32"></lucide-icon>
+    </div>
+    <h4>{{ title }}</h4>
+    <p>{{ description }}</p>
+    <button type="button" class="btn-soft" [disabled]="isInteractionDisabled">{{ buttonLabel }}</button>
+  </div>
+  
+  <div class="progress-content" *ngIf="isUploading" (click)="$event.stopPropagation()">
+    <div class="progress-header">
+      <span class="label">{{ progressLabel }}</span>
+      <span class="percent">{{ uploadProgress }}%</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" [style.width.%]="uploadProgress"></div>
+    </div>
+  </div>
+  
+  <input type="file" #fileInput [accept]="accept" [multiple]="multiple" (change)="onFileChange($event)" hidden>
+</div>

@@ -1,0 +1,43 @@
+<nav class="navbar" [class.scrolled]="isScrolled">
+  <div class="nav-container">
+    <a routerLink="/" class="logo">
+      <img class="logo-mark" src="assets/brand/shopora-icon.png" alt="Shopora logo" loading="eager">
+      <span class="logo-text">Shopora</span>
+    </a>
+
+    <div class="nav-center hidden-mobile glass">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+      <a routerLink="/products" routerLinkActive="active">Collections</a>
+      <a *ngIf="authService.isSeller()" routerLink="/seller/dashboard" routerLinkActive="active">Studio</a>
+      <a *ngIf="authService.isSeller()" routerLink="/seller/media" routerLinkActive="active">Media</a>
+      <a *ngIf="authService.isBuyer()" routerLink="/profile" routerLinkActive="active">Account</a>
+    </div>
+
+    <div class="nav-right">
+      <ng-container *ngIf="currentUser$ | async as user; else guestLinks">
+        <button
+          type="button"
+          class="btn-danger nav-logout-btn"
+          aria-label="Sign out"
+          title="Sign out"
+          (click)="logout()">
+          <lucide-icon [img]="LogOutIcon" size="18"></lucide-icon>
+        </button>
+        <a
+          class="avatar-btn avatar-link"
+          [routerLink]="getProfileRoute(user)"
+          [attr.aria-label]="'Open profile for ' + user.fullName">
+          <app-media-image *ngIf="user.avatarUrl; else fallBackAvatar" [src]="user.avatarUrl" [alt]="user.fullName" loading="eager"></app-media-image>
+          <ng-template #fallBackAvatar>
+            <div class="initials">{{ user.fullName.charAt(0) | uppercase }}</div>
+          </ng-template>
+        </a>
+      </ng-container>
+
+      <ng-template #guestLinks>
+        <a routerLink="/auth/login" class="nav-link hidden-mobile">Sign In</a>
+        <a routerLink="/auth/register" class="btn-primary register-link">Create Account</a>
+      </ng-template>
+    </div>
+  </div>
+</nav>

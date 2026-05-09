@@ -1,0 +1,108 @@
+/* styles/_layout.scss */
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(97, 212, 255, 0.18), transparent 32%),
+    radial-gradient(circle at top right, rgba(242, 76, 167, 0.12), transparent 30%),
+    radial-gradient(circle at bottom center, rgba(92, 98, 255, 0.12), transparent 28%),
+    linear-gradient(180deg, var(--color-bg-base) 0%, var(--color-bg-base-2) 100%);
+}
+
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  inset: auto;
+  z-index: -1;
+  pointer-events: none;
+  filter: blur(20px);
+}
+
+body::before {
+  top: 5rem;
+  left: -5rem;
+  width: 22rem;
+  height: 22rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(97, 212, 255, 0.12), transparent 66%);
+  animation: floatOrb 16s ease-in-out infinite;
+}
+
+body::after {
+  right: -4rem;
+  bottom: 4rem;
+  width: 24rem;
+  height: 24rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(242, 76, 167, 0.1), transparent 70%);
+  animation: floatOrb 18s ease-in-out infinite reverse;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-top: 6.8rem;
+}
+
+.app-background-blobs {
+  display: none;
+}
+
+.page-container {
+  width: min(1360px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1.5rem 0 4rem;
+}
+
+.section-kicker,
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--color-accent-primary);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+}
+
+.section-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--color-accent-primary);
+  font-size: 0.84rem;
+  font-weight: 800;
+  transition: transform 180ms var(--ease-out-expo), color 180ms ease;
+}
+
+.section-link:hover {
+  color: var(--color-text-primary);
+  transform: translateX(4px);
+}
+
+.full-width {
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  main {
+    padding-top: 6rem;
+  }
+
+  .page-container {
+    width: min(100%, calc(100% - 1rem));
+    padding-bottom: 3rem;
+  }
+}

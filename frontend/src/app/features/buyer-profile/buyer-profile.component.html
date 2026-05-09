@@ -1,0 +1,60 @@
+<div class="page-container buyer-profile">
+  <div class="profile-layout">
+    <aside class="profile-sidebar glass">
+      <div class="identity-block">
+        <div class="avatar-large">
+          <div class="initials">{{ user?.fullName?.charAt(0) || 'U' }}</div>
+        </div>
+        <span class="section-kicker">Buyer Account</span>
+        <h1>{{ user?.fullName }}</h1>
+        <p>Keep your account details up to date.</p>
+      </div>
+
+      <div class="sidebar-card">
+        <strong>Available now</strong>
+        <span>Display name updates and account sign-out.</span>
+      </div>
+
+      <button type="button" class="btn-danger full-width" (click)="logout()">Sign Out</button>
+    </aside>
+
+    <main class="profile-content glass">
+      <div class="content-heading">
+        <span class="section-kicker">Account Information</span>
+        <h2>Personal details</h2>
+        <p>Update the name shown across Shopora. Your email address stays the same for this account.</p>
+      </div>
+
+      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Display Name</label>
+            <input type="text" formControlName="fullName" placeholder="Your display name">
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" formControlName="email">
+          </div>
+        </div>
+
+        <div class="support-grid">
+          <article class="support-card">
+            <span class="field-chip">Current role</span>
+            <strong>{{ user?.role || 'CLIENT' }}</strong>
+          </article>
+          <article class="support-card">
+            <span class="field-chip">Account note</span>
+            <strong>Email stays the same</strong>
+          </article>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" [disabled]="isSubmitting">
+            <span *ngIf="!isSubmitting">Save Changes</span>
+            <span *ngIf="isSubmitting" class="spinner-inline"></span>
+          </button>
+        </div>
+      </form>
+    </main>
+  </div>
+</div>

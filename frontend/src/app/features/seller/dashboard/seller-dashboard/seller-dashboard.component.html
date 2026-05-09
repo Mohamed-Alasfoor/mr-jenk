@@ -1,0 +1,104 @@
+<div class="page-container">
+  <app-seller-portal-shell
+    kicker="Seller Studio"
+    title="Studio Overview"
+    description="Keep track of your listings, stock, and product photos from one simple overview."
+    sidebarActionLabel="New Product"
+    sidebarActionLink="/seller/products/new">
+
+    <div portal-actions>
+      <a routerLink="/seller/products/new" class="btn-primary">Upload New Product</a>
+      <a routerLink="/seller/media" class="btn-soft">Open Media Library</a>
+    </div>
+
+    <div class="dashboard-loader glass" *ngIf="isLoading">
+      <app-loading-spinner [compact]="true"></app-loading-spinner>
+      <p>Loading your shop...</p>
+    </div>
+
+    <ng-container *ngIf="!isLoading">
+      <section class="metrics-grid">
+        <article class="metric-card glass">
+          <span class="metric-label">Active listings</span>
+          <strong>{{ activeListingsCount }}</strong>
+          <p>Products currently visible in your shop.</p>
+        </article>
+
+        <article class="metric-card glass">
+          <span class="metric-label">Inventory units</span>
+          <strong>{{ totalInventoryUnits }}</strong>
+          <p>Total items available across all of your listings.</p>
+        </article>
+
+        <article class="metric-card metric-card-accent glass">
+          <span class="metric-label">Media assets</span>
+          <strong>{{ totalMediaAssets }}</strong>
+          <p>{{ linkedMediaCount }} are already showing on product pages.</p>
+        </article>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="workspace-card glass">
+          <div class="card-heading">
+            <div>
+              <span class="section-kicker">Shop Snapshot</span>
+              <h2>Recent listings</h2>
+            </div>
+            <a routerLink="/seller/products" class="section-link">View all listings</a>
+          </div>
+
+          <div class="empty-state" *ngIf="recentProducts.length === 0">
+            <h3>No products yet</h3>
+            <p>Your shop does not have any listings yet.</p>
+            <a routerLink="/seller/products/new" class="btn-primary">Create first listing</a>
+          </div>
+
+          <div class="table-shell" *ngIf="recentProducts.length > 0">
+            <div class="table-responsive">
+              <table class="workspace-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Stock</th>
+                    <th>Images</th>
+                    <th>Updated</th>
+                    <th class="actions-col">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let product of recentProducts">
+                    <td>
+                      <a [routerLink]="['/products', product.id]" class="table-link">{{ product.name }}</a>
+                    </td>
+                    <td>{{ product.quantity }}</td>
+                    <td>{{ product.imageUrls.length }}</td>
+                    <td>{{ product.updatedAt | date:'MMM dd, yyyy' }}</td>
+                    <td class="actions-col">
+                      <button
+                        type="button"
+                        class="table-action icon-table-action"
+                        (click)="confirmDelete(product)"
+                        [attr.aria-label]="'Delete ' + product.name"
+                        title="Delete product">
+                        <lucide-icon [img]="Trash2Icon" size="16"></lucide-icon>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </article>
+      </section>
+    </ng-container>
+  </app-seller-portal-shell>
+</div>
+
+<app-confirm-dialog
+  [isOpen]="isDeleteConfirmOpen"
+  [title]="productToDelete ? 'Delete ' + productToDelete.name + '?' : 'Delete Product?'"
+  message="Are you sure you want to permanently delete this product? Its images will be removed from the product page."
+  confirmText="Delete Product"
+  (confirm)="onDeleteConfirmed()"
+  (cancel)="onDeleteCancelled()">
+</app-confirm-dialog>

@@ -1,0 +1,125 @@
+<div class="page-container" *ngIf="isLoading">
+  <div class="loading-card detail-loading glass">
+    <div class="loading-copy">
+      <span class="section-kicker">Loading Product Page</span>
+      <h2>{{ loadingStage }}</h2>
+      <p>We're getting the product details, images, and seller information ready for you.</p>
+    </div>
+
+    <div class="loading-steps">
+      <article
+        class="loading-step"
+        *ngFor="let step of loadingSteps"
+        [class.done]="step.done"
+        [class.active]="step.active">
+        <span class="step-indicator"></span>
+        <div>
+          <strong>{{ step.label }}</strong>
+          <p>{{ step.description }}</p>
+        </div>
+      </article>
+    </div>
+
+    <app-skeleton type="product"></app-skeleton>
+  </div>
+</div>
+
+<div class="page-container not-found" *ngIf="isNotFound">
+  <div class="glass state-card">
+    <h2>Product not found</h2>
+    <p>The requested product is not available.</p>
+    <a routerLink="/products" class="btn-primary">Back to catalog</a>
+  </div>
+</div>
+
+<div class="page-container detail-page" *ngIf="product && !isLoading">
+  <a routerLink="/products" class="back-link">Back to catalog</a>
+
+  <section class="detail-layout">
+    <div class="gallery-col scroll-reveal">
+      <div class="gallery-shell glass">
+        <div class="stock-badge" *ngIf="product.quantity < 5 && product.quantity > 0">Low stock</div>
+        <div class="gallery-copy">
+          <span class="section-kicker">Gallery</span>
+          <p>Click the main image to view it larger.</p>
+        </div>
+        <app-image-gallery [imageUrls]="product.imageUrls || []"></app-image-gallery>
+      </div>
+    </div>
+
+    <div class="info-col scroll-reveal">
+      <div class="info-shell glass">
+        <span class="section-kicker">Product Detail</span>
+        <h1 class="product-title">{{ product.name }}</h1>
+
+        <div class="price-row">
+          <strong class="product-price">{{ product.price | currency:'USD':'symbol':'1.0-2' }}</strong>
+          <span class="status-pill" [class.available]="product.quantity > 4" [class.low]="product.quantity > 0 && product.quantity < 5" [class.out]="product.quantity === 0">
+            {{ product.quantity === 0 ? 'Sold out' : (product.quantity < 5 ? 'Low stock' : 'Available') }}
+          </span>
+        </div>
+
+        <p class="product-description">{{ product.description }}</p>
+
+        <div class="detail-stats">
+          <div class="stat-box">
+            <span>Images</span>
+            <strong>{{ product.imageUrls.length }}</strong>
+          </div>
+          <div class="stat-box">
+            <span>Available units</span>
+            <strong>{{ product.quantity }}</strong>
+          </div>
+          <div class="stat-box">
+            <span>Updated</span>
+            <strong>{{ product.updatedAt | date:'mediumDate' }}</strong>
+          </div>
+        </div>
+
+        <a *ngIf="seller" class="seller-card" [routerLink]="['/sellers', seller.id]">
+          <div class="seller-avatar">
+            <ng-container *ngIf="seller.avatarUrl; else sellerInitials">
+              <app-media-image [src]="seller.avatarUrl || null" [alt]="seller.fullName" loading="eager"></app-media-image>
+            </ng-container>
+
+            <ng-template #sellerInitials>
+              <div class="avatar-fallback">{{ sellerInitial }}</div>
+            </ng-template>
+          </div>
+
+          <div class="seller-copy">
+            <span class="seller-label">Seller storefront</span>
+            <strong>{{ seller.fullName }}</strong>
+            <span class="seller-meta">{{ sellerCatalogCount }} {{ sellerCatalogCount === 1 ? 'product' : 'products' }} live</span>
+          </div>
+
+          <span class="seller-link">View seller</span>
+        </a>
+
+        <div class="actions">
+          <a routerLink="/products" class="btn-primary">Keep browsing</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="related-section scroll-reveal" *ngIf="seller && (isLoadingMoreFromSeller || moreFromSeller.length > 0)">
+    <div class="related-header">
+      <div>
+        <span class="section-kicker">From the same seller</span>
+        <h3>More from {{ seller.fullName }}</h3>
+      </div>
+      <a [routerLink]="['/sellers', seller.id]" class="section-link">Open storefront</a>
+    </div>
+
+    <div class="products-grid">
+      <ng-container *ngIf="isLoadingMoreFromSeller; else sellerProductsList">
+        <app-skeleton *ngFor="let _ of skeletonArray" type="product"></app-skeleton>
+      </ng-container>
+
+      <ng-template #sellerProductsList>
+        <app-product-card *ngFor="let related of moreFromSeller; trackBy: trackByProductId" [product]="related"></app-product-card>
+      </ng-template>
+    </div>
+  </section>
+</div>

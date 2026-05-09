@@ -1,0 +1,11 @@
+<div class="toast-container">
+  <div *ngFor="let toast of toasts$ | async" 
+       class="toast glass" 
+       [ngClass]="toast.type"
+       (click)="remove(toast.id)">
+    <div class="toast-icon">
+      <lucide-icon [img]="getIcon(toast.type)" size="20"></lucide-icon>
+    </div>
+    <div class="toast-message">{{ toast.message }}</div>
+  </div>
+</div>

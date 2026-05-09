@@ -1,0 +1,157 @@
+<div class="page-container catalog-page">
+  <section class="catalog-hero glass">
+    <div class="hero-copy">
+      <span class="section-kicker">Curated Inventory</span>
+      <h1>New products</h1>
+      <p>
+        This catalog keeps only real filters powered by the existing product data:
+        text search, price range, availability, and sort order.
+      </p>
+    </div>
+
+    <div class="hero-controls">
+      <label class="sort-field">
+        <span>Sort by</span>
+        <select id="sortOption" [(ngModel)]="sortOption" name="sortOption">
+          <option value="newest">Newest arrivals</option>
+          <option value="oldest">Oldest first</option>
+          <option value="price-low">Price: low to high</option>
+          <option value="price-high">Price: high to low</option>
+          <option value="stock">Highest stock</option>
+        </select>
+      </label>
+      <div class="hero-summary">
+        <strong>{{ isLoading ? '...' : filteredProducts.length }}</strong>
+        <span>matching products</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="catalog-layout">
+    <aside class="filters-sidebar glass">
+      <div class="filter-group">
+        <h2>Search</h2>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          name="searchTerm"
+          placeholder="Product name or description">
+      </div>
+
+      <div class="filter-group">
+        <h2>Price range</h2>
+        <div class="price-range-card" *ngIf="!isLoading && products.length > 0; else priceInputsLoading">
+          <div class="range-slider-shell">
+            <div class="range-track"></div>
+            <div
+              class="range-track-fill"
+              [style.left.%]="rangeFillLeftPercent"
+              [style.width.%]="rangeFillWidthPercent">
+            </div>
+
+            <input
+              class="range-input"
+              type="range"
+              [min]="catalogMinPrice"
+              [max]="sliderMaxPrice"
+              step="0.01"
+              [value]="selectedMinPrice"
+              (input)="onMinPriceChange($any($event.target).value)"
+              aria-label="Minimum price range">
+
+            <input
+              class="range-input"
+              type="range"
+              [min]="catalogMinPrice"
+              [max]="sliderMaxPrice"
+              step="0.01"
+              [value]="selectedMaxPrice"
+              (input)="onMaxPriceChange($any($event.target).value)"
+              aria-label="Maximum price range">
+          </div>
+
+          <div class="price-grid">
+            <label>
+              <span>Minimum</span>
+              <input
+                type="number"
+                [min]="catalogMinPrice"
+                [max]="sliderMaxPrice"
+                step="0.01"
+                [ngModel]="selectedMinPrice"
+                (ngModelChange)="onMinPriceChange($event)"
+                name="minPriceInput">
+            </label>
+            <label>
+              <span>Maximum</span>
+              <input
+                type="number"
+                [min]="catalogMinPrice"
+                [max]="sliderMaxPrice"
+                step="0.01"
+                [ngModel]="selectedMaxPrice"
+                (ngModelChange)="onMaxPriceChange($event)"
+                name="maxPriceInput">
+            </label>
+          </div>
+
+          <div class="range-scale">
+            <span>{{ catalogMinPrice | currency:'USD':'symbol':'1.0-2' }}</span>
+            <span>{{ catalogMaxPrice | currency:'USD':'symbol':'1.0-2' }}</span>
+          </div>
+        </div>
+
+        <ng-template #priceInputsLoading>
+          <div class="price-loading-note">
+            Price controls appear after the catalog prices load.
+          </div>
+        </ng-template>
+      </div>
+
+      <div class="filter-group">
+        <h2>Availability</h2>
+        <div class="option-list">
+          <label><input type="radio" [(ngModel)]="availabilityFilter" name="availability" value="all"> All products</label>
+          <label><input type="radio" [(ngModel)]="availabilityFilter" name="availability" value="available"> Available now</label>
+          <label><input type="radio" [(ngModel)]="availabilityFilter" name="availability" value="low-stock"> Low stock</label>
+          <label><input type="radio" [(ngModel)]="availabilityFilter" name="availability" value="sold-out"> Sold out</label>
+        </div>
+      </div>
+
+      <button *ngIf="hasActiveFilters" type="button" class="btn-soft filter-reset" (click)="clearFilters()">Reset filters</button>
+    </aside>
+
+    <section class="catalog-results">
+      <div class="results-toolbar">
+        <div class="results-copy">
+          <span class="section-kicker">Catalog</span>
+          <h2>Available listings</h2>
+        </div>
+      </div>
+
+      <div class="products-grid" *ngIf="isLoading">
+        <app-skeleton *ngFor="let _ of skeletonArray" type="product"></app-skeleton>
+      </div>
+
+      <div class="products-grid" *ngIf="!isLoading && filteredProducts.length > 0">
+        <div class="product-frame scroll-reveal" *ngFor="let product of filteredProducts; trackBy: trackByProductId">
+          <app-product-card [product]="product"></app-product-card>
+        </div>
+      </div>
+
+      <div class="empty-container" *ngIf="!isLoading && products.length === 0">
+        <app-empty-state
+          heading="No Products Available"
+          description="There are no published products in the catalog right now.">
+        </app-empty-state>
+      </div>
+
+      <div class="empty-container" *ngIf="!isLoading && products.length > 0 && filteredProducts.length === 0">
+        <app-empty-state
+          heading="No Matching Products"
+          description="Try a different search term, price range, or availability filter.">
+        </app-empty-state>
+      </div>
+    </section>
+  </div>
+</div>

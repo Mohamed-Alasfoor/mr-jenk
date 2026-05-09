@@ -1,0 +1,86 @@
+<div class="page-container">
+  <app-seller-portal-shell
+    kicker="Seller Identity"
+    title="Seller Profile"
+    description="Update the public seller name and avatar shown across product pages, the navbar, and your storefront."
+    sidebarActionLabel="View Public Storefront"
+    [sidebarActionLink]="user ? ['/sellers', user.id] : '/seller/dashboard'">
+
+    <div portal-actions>
+      <a *ngIf="user" [routerLink]="['/sellers', user.id]" class="btn-soft">Public Storefront</a>
+    </div>
+
+    <div class="profile-grid">
+      <section class="workspace-card glass identity-card">
+        <div class="card-heading">
+          <div>
+            <span class="section-kicker">Seller Avatar</span>
+            <h2>Visual identity</h2>
+          </div>
+        </div>
+
+        <div class="avatar-preview">
+          <app-media-image *ngIf="displayedAvatarUrl; else sellerInitials" [src]="displayedAvatarUrl" alt="Seller avatar" loading="eager"></app-media-image>
+          <ng-template #sellerInitials>
+            <div class="initials">{{ user?.fullName?.charAt(0) || 'S' }}</div>
+          </ng-template>
+        </div>
+
+        <app-file-upload
+          accept="image/*"
+          [maxSizeBytes]="avatarMaxSizeBytes"
+          title="Upload seller avatar"
+          description="Choose an image up to 2 MB to represent your shop."
+          buttonLabel="Choose avatar"
+          (fileSelected)="onAvatarSelected($event)">
+        </app-file-upload>
+
+        <div class="avatar-meta" *ngIf="selectedAvatarFile">
+          <strong>{{ selectedAvatarFile.name }}</strong>
+          <span>{{ (selectedAvatarFile.size / 1024) | number:'1.0-0' }} KB</span>
+          <button type="button" class="btn-soft" (click)="clearSelectedAvatar()">Remove Selection</button>
+        </div>
+      </section>
+
+      <section class="workspace-card glass profile-card">
+        <div class="card-heading">
+          <div>
+            <span class="section-kicker">Account Details</span>
+            <h2>Seller information</h2>
+          </div>
+        </div>
+
+        <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Seller Name</label>
+              <input type="text" formControlName="fullName" placeholder="Your public seller name">
+            </div>
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" formControlName="email">
+            </div>
+          </div>
+
+          <div class="status-grid">
+            <article>
+              <span class="field-chip">Public profile</span>
+              <strong>Name and avatar</strong>
+            </article>
+            <article>
+              <span class="field-chip">Appears on</span>
+              <strong>Navigation, product pages, and your shop</strong>
+            </article>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" [disabled]="isSubmitting">
+              <span *ngIf="!isSubmitting">Save Changes</span>
+              <span *ngIf="isSubmitting" class="spinner-inline"></span>
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </app-seller-portal-shell>
+</div>

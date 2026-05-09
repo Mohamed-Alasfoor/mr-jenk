@@ -1,0 +1,59 @@
+<div class="gallery-container">
+  <button type="button" class="main-image-trigger" (click)="openLightbox()" [disabled]="!mainImage">
+    <div class="main-image-wrapper glass">
+      <app-media-image
+        [src]="mainImage"
+        alt="Product image"
+        loading="eager"
+        decoding="async"
+        [fallbackIconSize]="64">
+      </app-media-image>
+
+      <span class="expand-chip" *ngIf="mainImage">
+        <lucide-icon [img]="ExpandIcon" size="14"></lucide-icon>
+        <span>View large</span>
+      </span>
+    </div>
+  </button>
+
+  <div class="thumbnail-strip">
+    <div class="thumbnail-slot zoom-on-hover" 
+         *ngFor="let url of imageUrls; let i = index" 
+         (click)="selectImage(i)"
+         [class.active]="i === selectedIndex">
+      <app-media-image
+        [src]="url"
+        [alt]="'Thumbnail ' + i"
+        loading="lazy"
+        decoding="async"
+        [fallbackIconSize]="24">
+      </app-media-image>
+    </div>
+
+    <!-- Empty placeholders if less than 4 -->
+    <ng-container *ngIf="imageUrls.length < 4">
+      <div class="thumbnail-slot placeholder" *ngFor="let empty of [].constructor(4 - imageUrls.length)">
+        <lucide-icon [img]="ImageIconIcon" size="24" class="fallback-icon"></lucide-icon>
+      </div>
+    </ng-container>
+  </div>
+
+  <div class="lightbox-backdrop" *ngIf="isLightboxOpen" (click)="closeLightbox()">
+    <div class="lightbox-card glass" (click)="$event.stopPropagation()">
+      <button type="button" class="lightbox-close" (click)="closeLightbox()" aria-label="Close enlarged image">
+        <lucide-icon [img]="XIcon" size="18"></lucide-icon>
+      </button>
+
+      <div class="lightbox-image">
+        <app-media-image
+          [src]="mainImage"
+          alt="Product image enlarged"
+          loading="eager"
+          decoding="async"
+          objectFit="contain"
+          [fallbackIconSize]="88">
+        </app-media-image>
+      </div>
+    </div>
+  </div>
+</div>
