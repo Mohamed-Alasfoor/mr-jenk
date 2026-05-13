@@ -31,6 +31,7 @@ services:
       - minio-data:/data
 
   discovery-service:
+    image: buy01/discovery-service:${IMAGE_TAG:-latest}
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -49,6 +50,7 @@ services:
       start_period: 20s
 
   gateway-service:
+    image: buy01/gateway-service:${IMAGE_TAG:-latest}
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -73,6 +75,7 @@ services:
       start_period: 20s
 
   user-service:
+    image: buy01/user-service:${IMAGE_TAG:-latest}
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -101,6 +104,7 @@ services:
       start_period: 20s
 
   product-service:
+    image: buy01/product-service:${IMAGE_TAG:-latest}
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -128,6 +132,7 @@ services:
       start_period: 20s
 
   media-service:
+    image: buy01/media-service:${IMAGE_TAG:-latest}
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -163,6 +168,7 @@ services:
       start_period: 20s
 
   frontend:
+    image: buy01/frontend:${IMAGE_TAG:-latest}
     build:
       context: ./frontend
       dockerfile: Dockerfile
