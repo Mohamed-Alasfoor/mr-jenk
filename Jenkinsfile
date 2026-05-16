@@ -2,14 +2,13 @@ pipeline {
     agent any
 
     triggers {
-        // Poll SCM every 5 minutes - for the auditor to see automatic triggering
+
         pollSCM('H/5 * * * *')
     }
 
     environment {
         IMAGE_TAG = "${env.BUILD_NUMBER}"
-        // For audit: Sensitive data should be managed via Jenkins Credentials
-        // DOCKER_HUB_CREDENTIALS = credentials('docker-hub-creds')
+      
     }
 
     stages {
