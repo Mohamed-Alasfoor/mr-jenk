@@ -13,13 +13,17 @@ To ensure the auditor sees a working system, follow these steps:
    - Run: `docker compose up -d`.
    - Access Jenkins at `http://localhost:8080`.
 
-2. **Configure the Pipeline**:
-   - Create a **New Item** -> **Pipeline**.
-   - Name it `Ecommerce-Pipeline`.
-   - Under **Pipeline**, select **Pipeline script from SCM**.
-   - SCM: **Git**.
-   - Repository URL: `https://github.com/Mohamed-Alasfoor/mr-jenk.git`.
-   - Branch: `*/main`. (Or the branch you are using).
+2. **Configure the Pipeline (Inside the Jenkins Web Dashboard)**:
+   - Once logged into Jenkins at `http://localhost:8080`, look at the **left-hand sidebar**.
+   - Click on **New Item**.
+   - **Enter an item name**: Type `Ecommerce-Pipeline`.
+   - Select **Pipeline** from the list of options, then click **OK** at the bottom.
+   - On the next screen, scroll down to the **Pipeline** section.
+   - For **Definition**, select **Pipeline script from SCM**.
+   - For **SCM**, select **Git**.
+   - **Repository URL**: Paste `https://github.com/Mohamed-Alasfoor/mr-jenk.git`.
+   - **Branch Specifier**: Ensure it says `*/main` (or whichever branch you pushed your code to).
+   - Click **Save**.
 
 3. **Install Plugins (Required from your side)**:
    - Ensure the following plugins are installed in Jenkins (Manage Jenkins -> Plugins):
