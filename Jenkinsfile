@@ -107,10 +107,20 @@ pipeline {
 
     post {
         success {
+            emailext(
+    to: 'YOUR_EMAIL@gmail.com',
+    subject: "Jenkins Test Success",
+    body: "Email notification works."
+)
             echo "SUCCESS: Build #${BUILD_NUMBER} passed, deployed, and health check completed."
         }
 
         failure {
+            emailext(
+    to: 'YOUR_EMAIL@gmail.com',
+    subject: "Jenkins Test Failure",
+    body: "Build failed."
+)
             echo "Build failed."
         }
 
