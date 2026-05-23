@@ -47,7 +47,7 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh 'npm ci'
-                    sh 'npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox --code-coverage'
+                    sh 'CHROME_BIN=/usr/bin/chromium ng test --watch=false --browsers=ChromeHeadless --code-coverage --no-sandbox'
                 }
             }
             post {
@@ -111,7 +111,7 @@ pipeline {
      }
 
         always {
-            echo "Pipeline finished. Build URL: ${env.BUILD_URL}"
+            echo "Pipeline finished."
 
             cleanWs(
                 deleteDirs: true,
