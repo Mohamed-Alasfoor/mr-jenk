@@ -47,7 +47,7 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh 'npm ci'
-                    sh 'CHROME_BIN=/usr/bin/chromium ng test --watch=false --browsers=ChromeHeadless --code-coverage --no-sandbox'
+                    sh 'CHROME_BIN=/usr/bin/chromium ./node_modules/.bin/ng test --watch=false --browsers=ChromeHeadless --code-coverage --no-sandbox'
                 }
             }
             post {
