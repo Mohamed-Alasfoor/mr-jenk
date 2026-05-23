@@ -47,7 +47,7 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh 'npm ci'
-                    sh 'npm test -- --watch=false --browsers=ChromeHeadless --code-coverage'
+                    sh 'npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox --code-coverage'
                 }
             }
             post {
@@ -107,25 +107,8 @@ pipeline {
         }
 
         failure {
-            echo "FAILURE: Build #${BUILD_NUMBER} failed. Starting rollback..."
-
-            script {
-                if (env.BUILD_NUMBER.toInteger() > 1) {
-                    def previousTag = (env.BUILD_NUMBER.toInteger() - 1).toString()
-
-                    echo "Rolling back to previous image tag: ${previousTag}"
-
-                    sh """
-                        IMAGE_TAG=${previousTag} docker compose up -d
-                        docker compose ps
-                    """
-
-                    echo "Rollback completed."
-                } else {
-                    echo "No previous build available for rollback."
-                }
-            }
-        }
+        echo "Build failed."
+     }
 
         always {
             echo "Pipeline finished. Build URL: ${env.BUILD_URL}"
