@@ -108,7 +108,7 @@ pipeline {
     post {
         success {
             emailext(
-    to: 'YOUR_EMAIL@gmail.com',
+    to: 'mohammedalasfoor06@gmail.com',
     subject: "Jenkins Test Success",
     body: "Email notification works."
 )
@@ -117,7 +117,7 @@ pipeline {
 
         failure {
             emailext(
-    to: 'YOUR_EMAIL@gmail.com',
+    to: 'mohammedalasfoor06@gmail.com',
     subject: "Jenkins Test Failure",
     body: "Build failed."
 )
