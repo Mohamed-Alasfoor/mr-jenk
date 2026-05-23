@@ -47,7 +47,15 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh 'npm ci'
-                    sh 'CHROME_BIN=/usr/bin/chromium ./node_modules/.bin/ng test --watch=false --browsers=ChromeHeadlessNoSandbox --code-coverage'
+                    sh '''
+                        export CHROME_BIN=/usr/bin/chromium
+                        export CHROME_FLAGS="--no-sandbox --disable-dev-shm-usage"
+
+                        ./node_modules/.bin/ng test \
+                          --watch=false \
+                          --browsers=ChromeHeadless \
+                          --code-coverage
+                    '''
                 }
             }
             post {
@@ -107,8 +115,8 @@ pipeline {
         }
 
         failure {
-        echo "Build failed."
-     }
+            echo "Build failed."
+        }
 
         always {
             echo "Pipeline finished."
