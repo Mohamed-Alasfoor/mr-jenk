@@ -49,11 +49,10 @@ pipeline {
                     sh 'npm ci'
                     sh '''
                         export CHROME_BIN=/usr/bin/chromium
-                        export CHROME_FLAGS="--no-sandbox --disable-dev-shm-usage"
 
                         ./node_modules/.bin/ng test \
                           --watch=false \
-                          --browsers=ChromeHeadless \
+                          --browsers=ChromeHeadlessNoSandbox \
                           --code-coverage
                     '''
                 }
