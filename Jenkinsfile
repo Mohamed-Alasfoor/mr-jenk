@@ -128,7 +128,7 @@ pipeline {
         }
 
         always {
-            echo "Pipeline finished. Build URL: ${BUILD_URL}"
+            echo "Pipeline finished. Build URL: ${env.BUILD_URL}"
 
             cleanWs(
                 deleteDirs: true,
