@@ -347,3 +347,4 @@ The smoke test now covers:
 - MinIO is the default local object store so image binaries are not stored in MongoDB.
 - Kafka publishing is implemented but disabled by default so local development does not require a broker.
 - `backend/scripts/generate-dev-certs.ps1` can generate a shared PKCS12 certificate for local HTTPS runs.
+// webhook test
