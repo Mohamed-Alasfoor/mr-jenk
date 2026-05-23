@@ -2,13 +2,12 @@ pipeline {
     agent any
 
     triggers {
-
+        githubPush()
         pollSCM('H/5 * * * *')
     }
 
     environment {
         IMAGE_TAG = "${env.BUILD_NUMBER}"
-      
     }
 
     stages {
@@ -18,17 +17,28 @@ pipeline {
             }
         }
 
+        stage('Verify Tools') {
+            steps {
+                sh '''
+                    java -version
+                    mvn -version
+                    node -v
+                    npm -v
+                    docker --version
+                    docker compose version
+                '''
+            }
+        }
+
         stage('Backend Test') {
             steps {
                 dir('backend') {
-                    // Failures here will stop the pipeline
                     sh 'mvn clean test'
                 }
             }
             post {
                 always {
-                    // Archive JUnit results for the audit test report requirement
-                    junit '**/target/surefire-reports/*.xml'
+                    junit 'backend/**/target/surefire-reports/*.xml'
                 }
             }
         }
@@ -36,14 +46,12 @@ pipeline {
         stage('Frontend Test') {
             steps {
                 dir('frontend') {
-                    sh 'npm install'
-                    // Using ChromeHeadless for CI environment
+                    sh 'npm ci'
                     sh 'npm test -- --watch=false --browsers=ChromeHeadless --code-coverage'
                 }
             }
             post {
                 always {
-                    // Archive coverage or test results if available
                     archiveArtifacts artifacts: 'frontend/coverage/**', allowEmptyArchive: true
                 }
             }
@@ -51,33 +59,43 @@ pipeline {
 
         stage('Build Images') {
             steps {
-                echo "Building Docker images with tag: ${env.IMAGE_TAG}"
-                sh 'docker compose build'
+                sh 'IMAGE_TAG=${BUILD_NUMBER} docker compose build'
+            }
+        }
+
+        stage('Save Rollback Version') {
+            steps {
+                sh '''
+                    echo "${BUILD_NUMBER}" > .last-successful-build
+                    mkdir -p rollback
+                    cp docker-compose.yml rollback/docker-compose.yml
+                '''
+                archiveArtifacts artifacts: 'rollback/docker-compose.yml,.last-successful-build', allowEmptyArchive: true
             }
         }
 
         stage('Deploy') {
             steps {
-                echo "Deploying application..."
-                sh 'docker compose up -d'
+                sh 'IMAGE_TAG=${BUILD_NUMBER} docker compose up -d'
             }
         }
 
         stage('Health Check') {
             steps {
                 script {
-                    echo "Verifying deployment health..."
-                    // Wait for services to stabilize
+                    echo "Waiting for services to become healthy..."
                     sleep 30
+
                     sh 'docker compose ps'
 
-                    // Audit requirement: informative status
-                    def status = sh(script: 'docker compose ps --format json', returnStdout: true).trim()
-                    if (status.contains('"ExitCode":0') || status.contains('"Health":"healthy"') || status.contains('running')) {
-                        echo "Deployment is healthy."
-                    } else {
-                        error "Deployment health check failed!"
-                    }
+                    sh '''
+                        curl -f http://localhost:8761/actuator/health
+                        curl -f http://localhost:8080/actuator/health
+                        curl -f http://localhost:8081/actuator/health
+                        curl -f http://localhost:8082/actuator/health
+                        curl -f http://localhost:8083/actuator/health
+                        curl -k -f https://localhost/healthz || curl -f http://localhost/healthz
+                    '''
                 }
             }
         }
@@ -85,26 +103,38 @@ pipeline {
 
     post {
         success {
-            echo "SUCCESS: Build #${env.BUILD_NUMBER} completed successfully."
-            // For Audit: Informative notifications
-            // mail to: 'team@example.com', subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}", body: "The build passed and was deployed. URL: ${env.BUILD_URL}"
+            echo "SUCCESS: Build #${BUILD_NUMBER} passed, deployed, and health check completed."
         }
+
         failure {
-            echo "FAILURE: Build #${env.BUILD_NUMBER} failed. Initiating Rollback..."
+            echo "FAILURE: Build #${BUILD_NUMBER} failed. Starting rollback..."
+
             script {
                 if (env.BUILD_NUMBER.toInteger() > 1) {
                     def previousTag = (env.BUILD_NUMBER.toInteger() - 1).toString()
-                    echo "Rolling back to version ${previousTag}..."
-                    sh "IMAGE_TAG=${previousTag} docker compose up -d"
-                    echo "Rollback to ${previousTag} completed."
+
+                    echo "Rolling back to previous image tag: ${previousTag}"
+
+                    sh """
+                        IMAGE_TAG=${previousTag} docker compose up -d
+                        docker compose ps
+                    """
+
+                    echo "Rollback completed."
                 } else {
-                    echo "First build failed, no previous version available for rollback."
+                    echo "No previous build available for rollback."
                 }
             }
-            // mail to: 'team@example.com', subject: "FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}", body: "Build failed. Rollback initiated if applicable. Check logs: ${env.BUILD_URL}"
         }
-        unstable {
-            echo "UNSTABLE: Build #${env.BUILD_NUMBER} has some issues (e.g., test failures)."
+
+        always {
+            echo "Pipeline finished. Build URL: ${BUILD_URL}"
+
+            cleanWs(
+                deleteDirs: true,
+                disableDeferredWipeout: true,
+                notFailBuild: true
+            )
         }
     }
 }
