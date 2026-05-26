@@ -108,19 +108,45 @@ pipeline {
     post {
         success {
             emailext(
-    to: 'mohammedalasfoor06@gmail.com',
-    subject: "Jenkins Test Success",
-    body: "Email notification works."
-)
+                mimeType: 'text/html',
+                to: 'mohammedalasfoor06@gmail.com',
+                subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                    <h2 style="color:green;">Build Successful</h2>
+                    <table>
+                        <tr><td><b>Job</b></td><td>${env.JOB_NAME}</td></tr>
+                        <tr><td><b>Build #</b></td><td>${env.BUILD_NUMBER}</td></tr>
+                        <tr><td><b>Branch</b></td><td>main</td></tr>
+                        <tr><td><b>Commit</b></td><td>${env.GIT_COMMIT}</td></tr>
+                        <tr><td><b>Status</b></td><td>SUCCESS</td></tr>
+                        <tr><td><b>Deployment</b></td><td>Completed</td></tr>
+                        <tr><td><b>Health Check</b></td><td>Passed</td></tr>
+                        <tr><td><b>Build URL</b></td><td><a href="${env.BUILD_URL}">${env.BUILD_URL}</a></td></tr>
+                    </table>
+                """
+            )
+
             echo "SUCCESS: Build #${BUILD_NUMBER} passed, deployed, and health check completed."
         }
 
         failure {
             emailext(
-    to: 'mohammedalasfoor06@gmail.com',
-    subject: "Jenkins Test Failure",
-    body: "Build failed."
-)
+                mimeType: 'text/html',
+                to: 'mohammedalasfoor06@gmail.com',
+                subject: "FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                    <h2 style="color:red;">Build Failed</h2>
+                    <table>
+                        <tr><td><b>Job</b></td><td>${env.JOB_NAME}</td></tr>
+                        <tr><td><b>Build #</b></td><td>${env.BUILD_NUMBER}</td></tr>
+                        <tr><td><b>Branch</b></td><td>main</td></tr>
+                        <tr><td><b>Commit</b></td><td>${env.GIT_COMMIT}</td></tr>
+                        <tr><td><b>Status</b></td><td>FAILED</td></tr>
+                        <tr><td><b>Build URL</b></td><td><a href="${env.BUILD_URL}">${env.BUILD_URL}</a></td></tr>
+                    </table>
+                """
+            )
+
             echo "Build failed."
         }
 
