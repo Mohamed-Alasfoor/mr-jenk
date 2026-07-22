@@ -28,3 +28,5 @@ This directory contains the configuration for the Jenkins CI/CD environment.
 2. Run `docker compose up -d`.
 3. Access Jenkins at `http://localhost:8080`.
 4. Create a new "Pipeline" job and point it to the Git repository.
+
+#test
