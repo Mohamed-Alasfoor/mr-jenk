@@ -29,4 +29,3 @@ This directory contains the configuration for the Jenkins CI/CD environment.
 3. Access Jenkins at `http://localhost:8080`.
 4. Create a new "Pipeline" job and point it to the Git repository.
 
-#test
