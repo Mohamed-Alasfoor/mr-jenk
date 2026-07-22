@@ -23,6 +23,9 @@ RUN apt-get install -y chromium
 # Set environment variable for Chrome
 ENV CHROME_BIN=/usr/bin/chromium
 
+# Install the Jenkins plugins used by the pipeline
+RUN jenkins-plugin-cli --plugins git email-ext junit mailer ws-cleanup
+
 # Add jenkins user to docker group (group ID 999 is common for docker, but it might vary)
 # A more robust way is to do it at runtime, but for now we try to set permissions in docker-compose
 RUN groupadd docker && usermod -aG docker jenkins

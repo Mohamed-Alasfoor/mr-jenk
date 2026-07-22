@@ -20,11 +20,12 @@ docker compose up --build
 That starts the full stack:
 
 - Angular frontend on `https://localhost`
-- API gateway on `http://localhost:8080`
+- API gateway on `http://localhost:8090`
 - Eureka dashboard on `http://localhost:8761`
 - MongoDB on `localhost:27017`
 - MinIO API on `http://localhost:9000`
 - MinIO console on `http://localhost:9001`
+- Jenkins on `http://localhost:8080`
 
 To stop it:
 
