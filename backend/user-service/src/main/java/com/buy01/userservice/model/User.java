@@ -3,7 +3,7 @@ package com.buy01.userservice.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-
+// SonarQube quality gate verification change
 @Document(collection = "users")
 public class User {
 
