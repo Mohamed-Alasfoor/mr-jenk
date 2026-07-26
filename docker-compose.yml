@@ -212,8 +212,49 @@ services:
     environment:
       JAVA_OPTS: -Djenkins.install.runSetupWizard=false
 
+  sonar-db:
+    image: postgres:17
+    container_name: sonar-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sonarqube
+      POSTGRES_PASSWORD: sonarqube
+      POSTGRES_DB: sonarqube
+    volumes:
+      - sonar-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U sonarqube -d sonarqube
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: sonarqube
+    restart: unless-stopped
+    depends_on:
+      sonar-db:
+        condition: service_healthy
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonar-db:5432/sonarqube
+      SONAR_JDBC_USERNAME: sonarqube
+      SONAR_JDBC_PASSWORD: sonarqube
+    ports:
+      - "9002:9000"
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-extensions:/opt/sonarqube/extensions
+      - sonarqube-logs:/opt/sonarqube/logs
+
 volumes:
   mongo-data:
   minio-data:
   frontend-local-certs:
   jenkins-data:
+  sonar-postgres-data:
+  sonarqube-data:
+  sonarqube-extensions:
+  sonarqube-logs:

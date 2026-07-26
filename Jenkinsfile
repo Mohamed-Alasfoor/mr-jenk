@@ -32,22 +32,29 @@ pipeline {
             }
         }
 
-        stage('Backend Test') {
+        stage('Backend Test and Coverage') {
             steps {
                 dir('backend') {
-                    sh 'mvn clean test'
+                    sh 'mvn clean verify'
                 }
             }
 
             post {
                 always {
-                    junit allowEmptyResults: true,
-                          testResults: 'backend/**/target/surefire-reports/*.xml'
+                    junit(
+                        allowEmptyResults: true,
+                        testResults: 'backend/**/target/surefire-reports/*.xml'
+                    )
+
+                    archiveArtifacts(
+                        artifacts: 'backend/**/target/site/jacoco/**',
+                        allowEmptyArchive: true
+                    )
                 }
             }
         }
 
-        stage('Frontend Test') {
+        stage('Frontend Test and Coverage') {
             steps {
                 dir('frontend') {
                     sh 'npm ci'
@@ -69,6 +76,28 @@ pipeline {
                         artifacts: 'frontend/coverage/**',
                         allowEmptyArchive: true
                     )
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    def scannerHome = tool 'SonarScanner'
+
+                    withSonarQubeEnv('SonarQube') {
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
@@ -177,7 +206,8 @@ pipeline {
                                 ALL_READY=false
                             fi
 
-                            if [ "$HEALTH" = "starting" ] || [ "$HEALTH" = "unhealthy" ]; then
+                            if [ "$HEALTH" = "starting" ] || \
+                               [ "$HEALTH" = "unhealthy" ]; then
                                 ALL_READY=false
                             fi
                         done
@@ -232,16 +262,52 @@ pipeline {
                 to: 'mohammedalasfoor06@gmail.com',
                 subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
-                    <h2 style="color:green;">Build Successful</h2>
+                    <h2 style="color:green;">Pipeline Successful</h2>
                     <table>
-                        <tr><td><b>Job</b></td><td>${env.JOB_NAME}</td></tr>
-                        <tr><td><b>Build #</b></td><td>${env.BUILD_NUMBER}</td></tr>
-                        <tr><td><b>Branch</b></td><td>main</td></tr>
-                        <tr><td><b>Commit</b></td><td>${env.GIT_COMMIT}</td></tr>
-                        <tr><td><b>Status</b></td><td>SUCCESS</td></tr>
-                        <tr><td><b>Deployment</b></td><td>Completed</td></tr>
-                        <tr><td><b>Health Check</b></td><td>Passed</td></tr>
-                        <tr><td><b>Image Tag</b></td><td>${env.IMAGE_TAG}</td></tr>
+                        <tr>
+                            <td><b>Job</b></td>
+                            <td>${env.JOB_NAME}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Build #</b></td>
+                            <td>${env.BUILD_NUMBER}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Branch</b></td>
+                            <td>main</td>
+                        </tr>
+                        <tr>
+                            <td><b>Commit</b></td>
+                            <td>${env.GIT_COMMIT}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Status</b></td>
+                            <td>SUCCESS</td>
+                        </tr>
+                        <tr>
+                            <td><b>Tests</b></td>
+                            <td>Passed</td>
+                        </tr>
+                        <tr>
+                            <td><b>SonarQube Analysis</b></td>
+                            <td>Completed</td>
+                        </tr>
+                        <tr>
+                            <td><b>Quality Gate</b></td>
+                            <td>Passed</td>
+                        </tr>
+                        <tr>
+                            <td><b>Deployment</b></td>
+                            <td>Completed</td>
+                        </tr>
+                        <tr>
+                            <td><b>Health Check</b></td>
+                            <td>Passed</td>
+                        </tr>
+                        <tr>
+                            <td><b>Image Tag</b></td>
+                            <td>${env.IMAGE_TAG}</td>
+                        </tr>
                         <tr>
                             <td><b>Build URL</b></td>
                             <td>
@@ -254,7 +320,10 @@ pipeline {
                 """
             )
 
-            echo "SUCCESS: Build #${BUILD_NUMBER} passed, deployed, and passed the health check."
+            echo """
+                SUCCESS: Tests passed, Quality Gate passed,
+                deployment completed, and services are healthy.
+            """
         }
 
         failure {
@@ -263,10 +332,14 @@ pipeline {
                     env.DEPLOYMENT_STARTED == 'true' &&
                     env.PREVIOUS_IMAGE_TAG?.trim()
                 ) {
-                    echo "Deployment failed. Rolling back to image tag ${env.PREVIOUS_IMAGE_TAG}."
+                    echo """
+                        Deployment failed. Rolling back to image tag
+                        ${env.PREVIOUS_IMAGE_TAG}.
+                    """
 
                     sh """
-                        IMAGE_TAG=${env.PREVIOUS_IMAGE_TAG} docker compose up -d \
+                        IMAGE_TAG=${env.PREVIOUS_IMAGE_TAG} \
+                        docker compose up -d \
                             mongo \
                             minio \
                             discovery-service \
@@ -279,9 +352,15 @@ pipeline {
 
                     echo "Rollback command completed."
                 } else if (env.DEPLOYMENT_STARTED == 'true') {
-                    echo "Deployment failed, but no previous successful image tag is available."
+                    echo """
+                        Deployment failed, but no previous successful
+                        image tag is available.
+                    """
                 } else {
-                    echo "The pipeline failed before deployment. Rollback is not required."
+                    echo """
+                        Pipeline failed before deployment.
+                        Rollback is not required.
+                    """
                 }
             }
 
@@ -290,15 +369,38 @@ pipeline {
                 to: 'mohammedalasfoor06@gmail.com',
                 subject: "FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
-                    <h2 style="color:red;">Build Failed</h2>
+                    <h2 style="color:red;">Pipeline Failed</h2>
                     <table>
-                        <tr><td><b>Job</b></td><td>${env.JOB_NAME}</td></tr>
-                        <tr><td><b>Build #</b></td><td>${env.BUILD_NUMBER}</td></tr>
-                        <tr><td><b>Branch</b></td><td>main</td></tr>
-                        <tr><td><b>Commit</b></td><td>${env.GIT_COMMIT}</td></tr>
-                        <tr><td><b>Status</b></td><td>FAILED</td></tr>
-                        <tr><td><b>Attempted Image</b></td><td>${env.IMAGE_TAG}</td></tr>
-                        <tr><td><b>Rollback Image</b></td><td>${env.PREVIOUS_IMAGE_TAG ?: 'Not available'}</td></tr>
+                        <tr>
+                            <td><b>Job</b></td>
+                            <td>${env.JOB_NAME}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Build #</b></td>
+                            <td>${env.BUILD_NUMBER}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Branch</b></td>
+                            <td>main</td>
+                        </tr>
+                        <tr>
+                            <td><b>Commit</b></td>
+                            <td>${env.GIT_COMMIT}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Status</b></td>
+                            <td>FAILED</td>
+                        </tr>
+                        <tr>
+                            <td><b>Attempted Image</b></td>
+                            <td>${env.IMAGE_TAG}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Rollback Image</b></td>
+                            <td>
+                                ${env.PREVIOUS_IMAGE_TAG ?: 'Not available'}
+                            </td>
+                        </tr>
                         <tr>
                             <td><b>Build URL</b></td>
                             <td>
@@ -311,11 +413,14 @@ pipeline {
                 """
             )
 
-            echo "Build failed."
+            echo "Pipeline failed."
         }
 
         always {
-            echo "Pipeline finished with status: ${currentBuild.currentResult}"
+            echo """
+                Pipeline finished with status:
+                ${currentBuild.currentResult}
+            """
         }
 
         cleanup {
