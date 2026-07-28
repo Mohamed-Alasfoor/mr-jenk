@@ -7,6 +7,8 @@ import java.util.List;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.mongodb.core.mapping.FieldType;
 
 @Document(collection = "products")
 public class Product {
@@ -18,6 +20,7 @@ public class Product {
     private String description;
     @Indexed
     private String category;
+    @Field(targetType = FieldType.DECIMAL128)
     private BigDecimal price;
     private int quantity;
 
