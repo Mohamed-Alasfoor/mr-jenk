@@ -36,6 +36,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .requestMatchers(HttpMethod.GET, "/internal/products/*/ownership").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/internal/products/*/images").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/internal/products/*/stock/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/products/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/products").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/products/*").authenticated()

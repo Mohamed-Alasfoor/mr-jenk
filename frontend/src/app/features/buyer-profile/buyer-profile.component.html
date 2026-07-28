@@ -19,6 +19,12 @@
     </aside>
 
     <main class="profile-content glass">
+      <section class="support-grid" *ngIf="analytics">
+        <article class="support-card"><span class="field-chip">Total spent</span><strong>{{analytics.totalSpent || 0 | currency}}</strong></article>
+        <article class="support-card"><span class="field-chip">Orders</span><strong>{{analytics.orderCount}}</strong></article>
+        <article class="support-card"><span class="field-chip">Most bought</span><strong>{{analytics.topProducts.length ? analytics.topProducts[0].key : 'No purchases yet'}}</strong></article>
+        <article class="support-card"><span class="field-chip">Top category</span><strong>{{analytics.topCategories.length ? analytics.topCategories[0].key : 'No purchases yet'}}</strong></article>
+      </section>
       <div class="content-heading">
         <span class="section-kicker">Account Information</span>
         <h2>Personal details</h2>

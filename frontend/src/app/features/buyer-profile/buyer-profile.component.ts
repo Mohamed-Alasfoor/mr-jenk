@@ -7,6 +7,8 @@ import { filter } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { User } from '../../core/models/user.model';
+import { Analytics } from '../../core/models/commerce.model';
+import { CommerceService } from '../../core/services/commerce.service';
 
 @Component({
   selector: 'app-buyer-profile',
@@ -21,10 +23,12 @@ export class BuyerProfileComponent implements OnInit {
   fb = inject(FormBuilder);
   router = inject(Router);
   destroyRef = inject(DestroyRef);
+  commerceService = inject(CommerceService);
 
   profileForm!: FormGroup;
   user: User | null = null;
   isSubmitting = false;
+  analytics?: Analytics;
 
   ngOnInit() {
     this.profileForm = this.fb.group({
@@ -43,6 +47,11 @@ export class BuyerProfileComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe((user) => this.applyUser(user));
+
+    this.commerceService.analytics().subscribe({
+      next: analytics => this.analytics = analytics,
+      error: () => this.toastService.show('Purchase analytics are temporarily unavailable', 'warning')
+    });
   }
 
   onSubmit() {

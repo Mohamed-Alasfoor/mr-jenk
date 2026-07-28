@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, shareReplay, tap, throwError } from 'rxjs';
+import { HttpParams } from '@angular/common/http';
 import { Product } from '../models/product.model';
 import { environment } from '../../../environments/environment';
 import { normalizeManagedMediaUrls } from '../utils/media-url';
@@ -9,12 +10,24 @@ interface ProductResponse {
   id: string;
   name: string;
   description: string;
+  category?: string;
   price: number;
   quantity: number;
   sellerId: string;
   imageUrls?: string[] | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ProductSearchResult {
+  items: Product[];
+  totalElements: number;
+  totalPages: number;
+  page: number;
+  size: number;
+  categories: string[];
+  minPrice: number;
+  maxPrice: number;
 }
 
 @Injectable({
@@ -45,6 +58,19 @@ export class ProductService {
       );
 
     return this.allProducts$;
+  }
+
+  search(filters: {
+    keyword?: string; category?: string; minPrice?: number; maxPrice?: number;
+    availability?: string; sort?: string; page?: number; size?: number;
+  }): Observable<ProductSearchResult> {
+    let params = new HttpParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') params = params.set(key, String(value));
+    });
+    return this.http.get<ProductSearchResult>(`${this.apiUrl}/products/search`, { params }).pipe(
+      map(result => ({ ...result, items: result.items.map(item => this.normalizeProduct(item as ProductResponse)) }))
+    );
   }
 
   getById(id: string): Observable<Product> {
@@ -135,6 +161,7 @@ export class ProductService {
   private normalizeProduct(product: ProductResponse): Product {
     return {
       ...product,
+      category: product.category || 'General',
       imageUrls: normalizeManagedMediaUrls(product.imageUrls)
     };
   }

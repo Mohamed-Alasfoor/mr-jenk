@@ -58,6 +58,14 @@
             {{ product.quantity === 0 ? 'Sold out' : (product.quantity < 5 ? 'Low stock' : 'Available') }}
           </span>
         </div>
+        <button
+          *ngIf="authService.isBuyer()"
+          type="button"
+          class="btn-primary"
+          [disabled]="product.quantity === 0"
+          (click)="addToCart()">
+          {{ product.quantity === 0 ? 'Sold out' : 'Add to cart' }}
+        </button>
 
         <p class="product-description">{{ product.description }}</p>
 

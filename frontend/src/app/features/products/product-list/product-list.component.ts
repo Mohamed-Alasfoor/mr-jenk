@@ -34,12 +34,40 @@ export class ProductListComponent implements OnInit {
   selectedMaxPrice = 1000;
   availabilityFilter: AvailabilityOption = 'all';
   sortOption: SortOption = 'newest';
+  selectedCategory = '';
+  categories: string[] = [];
+  page = 0;
+  totalPages = 0;
+  totalElements = 0;
 
   ngOnInit(): void {
-    this.productService.getAll().subscribe({
-      next: (data) => {
-        this.products = data;
-        this.syncPriceBounds(data);
+    this.loadProducts(true);
+  }
+
+  loadProducts(initial = false): void {
+    this.isLoading = true;
+    this.productService.search({
+      keyword: this.searchTerm,
+      category: this.selectedCategory,
+      minPrice: initial ? undefined : this.selectedMinPrice,
+      maxPrice: initial ? undefined : this.selectedMaxPrice,
+      availability: this.availabilityFilter,
+      sort: this.sortOption,
+      page: this.page,
+      size: 12
+    }).subscribe({
+      next: (result) => {
+        this.products = result.items;
+        this.categories = result.categories;
+        this.totalPages = result.totalPages;
+        this.totalElements = result.totalElements;
+        if (initial) {
+          this.catalogMinPrice = result.minPrice;
+          this.catalogMaxPrice = result.maxPrice;
+          this.sliderMaxPrice = result.maxPrice > result.minPrice ? result.maxPrice : result.maxPrice + 1;
+          this.selectedMinPrice = result.minPrice;
+          this.selectedMaxPrice = result.maxPrice;
+        }
         this.isLoading = false;
       },
       error: () => {
@@ -48,6 +76,9 @@ export class ProductListComponent implements OnInit {
       }
     });
   }
+
+  applyFilters(): void { this.page = 0; this.loadProducts(); }
+  goToPage(page: number): void { if (page < 0 || page >= this.totalPages) return; this.page = page; this.loadProducts(); }
 
   get filteredProducts(): Product[] {
     const search = this.searchTerm.trim().toLowerCase();
@@ -104,6 +135,9 @@ export class ProductListComponent implements OnInit {
     this.selectedMaxPrice = this.catalogMaxPrice;
     this.availabilityFilter = 'all';
     this.sortOption = 'newest';
+    this.selectedCategory = '';
+    this.page = 0;
+    this.loadProducts();
   }
 
   onMinPriceChange(value: string | number | null): void {

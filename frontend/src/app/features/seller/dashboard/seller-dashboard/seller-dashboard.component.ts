@@ -11,6 +11,8 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { SellerPortalShellComponent } from '../../../../shared/components/seller-portal-shell/seller-portal-shell.component';
+import { CommerceService } from '../../../../core/services/commerce.service';
+import { Analytics } from '../../../../core/models/commerce.model';
 
 @Component({
   selector: 'app-seller-dashboard',
@@ -30,12 +32,14 @@ export class SellerDashboardComponent implements OnInit {
   productService = inject(ProductService);
   mediaService = inject(MediaService);
   toastService = inject(ToastService);
+  commerceService = inject(CommerceService);
 
   products: Product[] = [];
   mediaItems: MediaItem[] = [];
   isLoading = true;
   isDeleteConfirmOpen = false;
   productToDelete: Product | null = null;
+  analytics?: Analytics;
   readonly Trash2Icon = Trash2;
 
   ngOnInit(): void {
@@ -51,11 +55,15 @@ export class SellerDashboardComponent implements OnInit {
           this.toastService.show(err.error?.message || 'Failed to load media metrics', 'error');
           return of([] as MediaItem[]);
         })
+      ),
+      analytics: this.commerceService.analytics().pipe(
+        catchError(() => of(undefined))
       )
     }).subscribe({
-      next: ({ products, mediaItems }) => {
+      next: ({ products, mediaItems, analytics }) => {
         this.products = products;
         this.mediaItems = mediaItems;
+        this.analytics = analytics;
         this.isLoading = false;
       }
     });

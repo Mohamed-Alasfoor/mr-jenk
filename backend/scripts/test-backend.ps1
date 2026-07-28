@@ -535,6 +535,7 @@ $sellerTwoToken = $null
 $clientToken = $null
 $adminToken = $null
 $productId = $null
+$orderId = $null
 $mediaId = $null
 $imageUrl = $null
 $sellerTwoMediaId = $null
@@ -1072,6 +1073,52 @@ if ($script:RunAdminBootstrapTests) {
         $downloadResponse = Invoke-JsonRequest -Method "GET" -Url "$GatewayBaseUrl/media/images/$extraMediaId"
         Require-Status -Response $downloadResponse -ExpectedStatus 404
     }
+}
+
+Run-Test "Public product search supports facets and pagination" {
+    $response = Invoke-JsonRequest -Method "GET" -Url "$GatewayBaseUrl/products/search?keyword=updated&category=General&page=0&size=5"
+    Require-Status -Response $response -ExpectedStatus 200
+    $items = @(Get-ObjectPropertyValue -Object $response.Json -PropertyName "items")
+    Require ($null -ne $items) "Expected paginated search items"
+}
+
+Run-Test "Client adds product to cart" {
+    $body = @{ productId = $productId; quantity = 1 }
+    $response = Invoke-JsonRequest -Method "PUT" -Url "$GatewayBaseUrl/cart/items" -Body $body -Token $clientToken
+    Require-Status -Response $response -ExpectedStatus 200
+    $items = @(Get-ObjectPropertyValue -Object $response.Json -PropertyName "items")
+    Require ($items.Count -eq 1) "Expected one cart item"
+}
+
+Run-Test "Client checks out with Pay on Delivery" {
+    $body = @{ address = "Building 1, Road 2, Manama"; paymentMethod = "PAY_ON_DELIVERY" }
+    $response = Invoke-JsonRequest -Method "POST" -Url "$GatewayBaseUrl/orders" -Body $body -Token $clientToken
+    Require-Status -Response $response -ExpectedStatus 200
+    $script:orderId = [string](Get-ObjectPropertyValue -Object $response.Json -PropertyName "id")
+    $payment = [string](Get-ObjectPropertyValue -Object $response.Json -PropertyName "paymentMethod")
+    Require (-not [string]::IsNullOrWhiteSpace($orderId)) "Expected created order id"
+    Require ($payment -eq "PAY_ON_DELIVERY") "Expected Pay on Delivery order"
+}
+
+Run-Test "Seller can find related order" {
+    $response = Invoke-JsonRequest -Method "GET" -Url "$GatewayBaseUrl/orders?query=$orderId&status=PENDING" -Token $sellerOneToken
+    Require-Status -Response $response -ExpectedStatus 200
+    $ids = @($response.Json | ForEach-Object { $_.id })
+    Require ($ids -contains $orderId) "Expected related order in seller search"
+}
+
+Run-Test "Client can cancel, redo, and remove order" {
+    $cancel = Invoke-JsonRequest -Method "POST" -Url "$GatewayBaseUrl/orders/$orderId/cancel" -Body @{} -Token $clientToken
+    Require-Status -Response $cancel -ExpectedStatus 200
+    $redo = Invoke-JsonRequest -Method "POST" -Url "$GatewayBaseUrl/orders/$orderId/redo" -Body @{} -Token $clientToken
+    Require-Status -Response $redo -ExpectedStatus 200
+    $remove = Invoke-JsonRequest -Method "DELETE" -Url "$GatewayBaseUrl/orders/$orderId" -Token $clientToken
+    Require-Status -Response $remove -ExpectedStatus 204
+}
+
+Run-Test "Buyer analytics endpoint is available" {
+    $response = Invoke-JsonRequest -Method "GET" -Url "$GatewayBaseUrl/analytics/me" -Token $clientToken
+    Require-Status -Response $response -ExpectedStatus 200
 }
 
 Run-Test "Owner deletes product" {

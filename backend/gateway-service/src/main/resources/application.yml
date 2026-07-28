@@ -25,6 +25,10 @@ spring:
           uri: lb://media-service
           predicates:
             - Path=/media/**
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/cart/**,/orders/**,/analytics/**
 
 eureka:
   client:

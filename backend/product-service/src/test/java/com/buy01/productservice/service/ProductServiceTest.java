@@ -25,6 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.data.mongodb.core.MongoTemplate;
 
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
@@ -37,6 +38,9 @@ class ProductServiceTest {
 
     @Mock
     private ProductEventPublisher productEventPublisher;
+
+    @Mock
+    private MongoTemplate mongoTemplate;
 
     @InjectMocks
     private ProductService productService;

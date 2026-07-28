@@ -12,7 +12,7 @@
     <div class="hero-controls">
       <label class="sort-field">
         <span>Sort by</span>
-        <select id="sortOption" [(ngModel)]="sortOption" name="sortOption">
+        <select id="sortOption" [(ngModel)]="sortOption" (change)="applyFilters()" name="sortOption">
           <option value="newest">Newest arrivals</option>
           <option value="oldest">Oldest first</option>
           <option value="price-low">Price: low to high</option>
@@ -21,7 +21,7 @@
         </select>
       </label>
       <div class="hero-summary">
-        <strong>{{ isLoading ? '...' : filteredProducts.length }}</strong>
+        <strong>{{ isLoading ? '...' : totalElements }}</strong>
         <span>matching products</span>
       </div>
     </div>
@@ -36,6 +36,15 @@
           [(ngModel)]="searchTerm"
           name="searchTerm"
           placeholder="Product name or description">
+        <button type="button" class="btn-primary" (click)="applyFilters()">Search</button>
+      </div>
+
+      <div class="filter-group">
+        <h2>Category</h2>
+        <select [(ngModel)]="selectedCategory" (change)="applyFilters()" name="category">
+          <option value="">All categories</option>
+          <option *ngFor="let category of categories" [value]="category">{{category}}</option>
+        </select>
       </div>
 
       <div class="filter-group">
@@ -111,12 +120,17 @@
       <div class="filter-group">
         <h2>Availability</h2>
         <div class="option-list">
-          <label><input type="radio" [(ngModel)]="availabilityFilter" name="availability" value="all"> All products</label>
-          <label><input type="radio" [(ngModel)]="availabilityFilter" name="availability" value="available"> Available now</label>
-          <label><input type="radio" [(ngModel)]="availabilityFilter" name="availability" value="low-stock"> Low stock</label>
-          <label><input type="radio" [(ngModel)]="availabilityFilter" name="availability" value="sold-out"> Sold out</label>
+          <label><input type="radio" [(ngModel)]="availabilityFilter" (change)="applyFilters()" name="availability" value="all"> All products</label>
+          <label><input type="radio" [(ngModel)]="availabilityFilter" (change)="applyFilters()" name="availability" value="available"> Available now</label>
+          <label><input type="radio" [(ngModel)]="availabilityFilter" (change)="applyFilters()" name="availability" value="low-stock"> Low stock</label>
+          <label><input type="radio" [(ngModel)]="availabilityFilter" (change)="applyFilters()" name="availability" value="sold-out"> Sold out</label>
         </div>
       </div>
+      <nav class="pagination" *ngIf="totalPages > 1" aria-label="Product pages">
+        <button class="btn-soft" [disabled]="page === 0" (click)="goToPage(page-1)">Previous</button>
+        <span>Page {{page+1}} of {{totalPages}}</span>
+        <button class="btn-soft" [disabled]="page+1 >= totalPages" (click)="goToPage(page+1)">Next</button>
+      </nav>
 
       <button *ngIf="hasActiveFilters" type="button" class="btn-soft filter-reset" (click)="clearFilters()">Reset filters</button>
     </aside>

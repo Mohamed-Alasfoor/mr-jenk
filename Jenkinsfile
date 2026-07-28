@@ -134,6 +134,7 @@ pipeline {
                         discovery-service \
                         media-service \
                         product-service \
+                        order-service \
                         user-service \
                         gateway-service \
                         frontend
@@ -154,6 +155,7 @@ pipeline {
                         discovery-service \
                         media-service \
                         product-service \
+                        order-service \
                         user-service \
                         gateway-service \
                         frontend
@@ -173,6 +175,7 @@ pipeline {
                         discovery-service
                         media-service
                         product-service
+                        order-service
                         user-service
                         gateway-service
                         frontend
@@ -345,6 +348,7 @@ pipeline {
                             discovery-service \
                             media-service \
                             product-service \
+                            order-service \
                             user-service \
                             gateway-service \
                             frontend

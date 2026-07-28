@@ -10,6 +10,7 @@ COPY gateway-service/pom.xml gateway-service/pom.xml
 COPY user-service/pom.xml user-service/pom.xml
 COPY product-service/pom.xml product-service/pom.xml
 COPY media-service/pom.xml media-service/pom.xml
+COPY order-service/pom.xml order-service/pom.xml
 
 RUN mvn -q -pl ${SERVICE_MODULE} -am dependency:go-offline
 

@@ -167,6 +167,36 @@ services:
       retries: 12
       start_period: 20s
 
+  order-service:
+    image: buy01/order-service:${IMAGE_TAG:-latest}
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE_MODULE: order-service
+    restart: unless-stopped
+    environment:
+      ORDER_SERVICE_MONGODB_URI: mongodb://mongo:27017/order_service_db
+      EUREKA_DEFAULT_ZONE: http://discovery-service:8761/eureka
+      PRODUCT_SERVICE_INTERNAL_BASE_URL: http://product-service:8082
+    depends_on:
+      mongo:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+    ports:
+      - "8084:8084"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -fsS http://localhost:8084/actuator/health | grep -q '"status":"UP"'
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
   frontend:
     image: buy01/frontend:${IMAGE_TAG:-latest}
     build:

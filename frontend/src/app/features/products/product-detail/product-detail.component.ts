@@ -10,6 +10,8 @@ import { MediaImageComponent } from '../../../shared/components/media-image/medi
 import { ProductCardComponent } from '../../../shared/components/product-card/product-card.component';
 import { SkeletonComponent } from '../../../shared/components/skeleton/skeleton.component';
 import { ToastService } from '../../../core/services/toast.service';
+import { CommerceService } from '../../../core/services/commerce.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-product-detail',
@@ -23,6 +25,8 @@ export class ProductDetailComponent implements OnInit {
   productService = inject(ProductService);
   sellerService = inject(SellerService);
   toastService = inject(ToastService);
+  commerceService = inject(CommerceService);
+  authService = inject(AuthService);
 
   product: Product | null = null;
   seller: PublicSellerProfile | null = null;
@@ -148,6 +152,14 @@ export class ProductDetailComponent implements OnInit {
 
   trackByProductId(index: number, product: Product): string {
     return product.id;
+  }
+
+  addToCart(): void {
+    if (!this.product) return;
+    this.commerceService.setItem(this.product.id, 1).subscribe({
+      next: () => this.toastService.show('Added to your cart.', 'success'),
+      error: () => this.toastService.show('Could not add this product to your cart.', 'error')
+    });
   }
 
   private resetSellerData(): void {

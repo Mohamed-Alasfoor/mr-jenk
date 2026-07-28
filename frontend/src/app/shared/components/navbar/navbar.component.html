@@ -11,6 +11,9 @@
       <a *ngIf="authService.isSeller()" routerLink="/seller/dashboard" routerLinkActive="active">Studio</a>
       <a *ngIf="authService.isSeller()" routerLink="/seller/media" routerLinkActive="active">Media</a>
       <a *ngIf="authService.isBuyer()" routerLink="/profile" routerLinkActive="active">Account</a>
+      <a *ngIf="authService.isBuyer()" routerLink="/cart" routerLinkActive="active">Cart</a>
+      <a *ngIf="authService.isBuyer()" routerLink="/orders" routerLinkActive="active">Orders</a>
+      <a *ngIf="authService.isSeller()" routerLink="/seller/orders" routerLinkActive="active">Orders</a>
     </div>
 
     <div class="nav-right">

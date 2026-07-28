@@ -1,0 +1,23 @@
+<main class="commerce-page">
+  <header><p class="eyebrow">Checkout · Step {{step}} of 2</p><h1>{{step===1?'Address and cart':'Review and confirm'}}</h1><p>Address → review → confirmation. Payment is collected on delivery.</p></header>
+  <p *ngIf="loading">Loading cart…</p>
+  <section class="cart-layout" *ngIf="cart">
+    <div class="glass items">
+      <article *ngFor="let item of cart.items">
+        <div><strong>{{product(item.productId)?.name || item.productId}}</strong><p>{{product(item.productId)?.price | currency}} each</p></div>
+        <input type="number" min="1" [max]="product(item.productId)?.quantity || 99" [ngModel]="item.quantity" (ngModelChange)="update(item.productId,$event)" aria-label="Quantity">
+        <strong>{{(product(item.productId)?.price || 0)*item.quantity | currency}}</strong>
+        <button class="btn-danger" (click)="remove(item.productId)">Remove</button>
+      </article>
+      <p *ngIf="!cart.items.length">Your cart is empty.</p>
+    </div>
+    <aside class="glass summary">
+      <h2>Order summary</h2><div class="total"><span>Total</span><strong>{{total|currency}}</strong></div>
+      <label>Delivery address<textarea [(ngModel)]="address" [readonly]="step===2" rows="4" placeholder="Building, road, city"></textarea></label>
+      <div class="payment"><strong>Pay on Delivery</strong><small>No online payment is collected.</small></div>
+      <button *ngIf="step===1" class="btn-primary" [disabled]="!cart.items.length" (click)="review()">Review order</button>
+      <button *ngIf="step===2" class="btn-soft" [disabled]="submitting" (click)="step=1">Edit address</button>
+      <button *ngIf="step===2" class="btn-primary" [disabled]="submitting" (click)="checkout()">{{submitting?'Placing order…':'Confirm Pay on Delivery'}}</button>
+    </aside>
+  </section>
+</main>

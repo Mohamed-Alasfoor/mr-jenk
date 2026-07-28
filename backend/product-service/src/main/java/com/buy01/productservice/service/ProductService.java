@@ -14,6 +14,11 @@ import java.util.List;
 import java.util.Objects;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 
 @Service
 public class ProductService {
@@ -21,15 +26,18 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final MediaServiceClient mediaServiceClient;
     private final ProductEventPublisher productEventPublisher;
+    private final MongoTemplate mongoTemplate;
 
     public ProductService(
             ProductRepository productRepository,
             MediaServiceClient mediaServiceClient,
-            ProductEventPublisher productEventPublisher
+            ProductEventPublisher productEventPublisher,
+            MongoTemplate mongoTemplate
     ) {
         this.productRepository = productRepository;
         this.mediaServiceClient = mediaServiceClient;
         this.productEventPublisher = productEventPublisher;
+        this.mongoTemplate = mongoTemplate;
     }
 
     public List<ProductResponse> getAllProducts() {
@@ -68,6 +76,7 @@ public class ProductService {
         Product product = new Product();
         product.setName(request.name().trim());
         product.setDescription(request.description().trim());
+        product.setCategory(normalizeCategory(request.category()));
         product.setPrice(request.price());
         product.setQuantity(request.quantity());
         product.setImageUrls(List.of());
@@ -132,6 +141,22 @@ public class ProductService {
         findManagedProduct(productId, user);
     }
 
+    public ProductResponse reserveStock(String productId, int quantity) {
+        Query query = Query.query(Criteria.where("_id").is(productId).and("quantity").gte(quantity));
+        Product product = mongoTemplate.findAndModify(query, new Update().inc("quantity", -quantity).set("updatedAt", Instant.now()),
+                FindAndModifyOptions.options().returnNew(true), Product.class);
+        if (product == null) throw new IllegalStateException("Insufficient stock");
+        return mapToResponse(product);
+    }
+
+    public ProductResponse releaseStock(String productId, int quantity) {
+        Product product = mongoTemplate.findAndModify(Query.query(Criteria.where("_id").is(productId)),
+                new Update().inc("quantity", quantity).set("updatedAt", Instant.now()),
+                FindAndModifyOptions.options().returnNew(true), Product.class);
+        if (product == null) throw new ProductNotFoundException(productId);
+        return mapToResponse(product);
+    }
+
     private Product findById(String id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
@@ -148,6 +173,7 @@ public class ProductService {
     private void applyRequest(Product product, ProductRequest request, List<String> imageUrls) {
         product.setName(request.name().trim());
         product.setDescription(request.description().trim());
+        product.setCategory(normalizeCategory(request.category()));
         product.setPrice(request.price());
         product.setQuantity(request.quantity());
         product.setImageUrls(imageUrls);
@@ -166,12 +192,17 @@ public class ProductService {
                 .toList();
     }
 
+    private String normalizeCategory(String category) {
+        return category == null || category.isBlank() ? "General" : category.trim();
+    }
+
     private ProductResponse mapToResponse(Product product) {
         List<String> imageUrls = product.getImageUrls() == null ? List.of() : List.copyOf(product.getImageUrls());
         return new ProductResponse(
                 product.getId(),
                 product.getName(),
                 product.getDescription(),
+                product.getCategory() == null ? "General" : product.getCategory(),
                 product.getPrice(),
                 product.getQuantity(),
                 product.getSellerId(),

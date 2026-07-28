@@ -2,8 +2,11 @@ package com.buy01.productservice.controller;
 
 import com.buy01.productservice.dto.ProductRequest;
 import com.buy01.productservice.dto.ProductResponse;
+import com.buy01.productservice.dto.ProductSearchResponse;
 import com.buy01.productservice.security.AuthenticatedUser;
 import com.buy01.productservice.service.ProductService;
+import com.buy01.productservice.service.ProductSearchService;
+import java.math.BigDecimal;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,14 +30,30 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductSearchService productSearchService;
 
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, ProductSearchService productSearchService) {
         this.productService = productService;
+        this.productSearchService = productSearchService;
     }
 
     @GetMapping
     public List<ProductResponse> getProducts() {
         return productService.getAllProducts();
+    }
+
+    @GetMapping("/search")
+    public ProductSearchResponse search(
+            @RequestParam(required=false) String keyword,
+            @RequestParam(required=false) String category,
+            @RequestParam(required=false) BigDecimal minPrice,
+            @RequestParam(required=false) BigDecimal maxPrice,
+            @RequestParam(defaultValue="all") String availability,
+            @RequestParam(defaultValue="newest") String sort,
+            @RequestParam(defaultValue="0") int page,
+            @RequestParam(defaultValue="12") int size
+    ) {
+        return productSearchService.search(keyword,category,minPrice,maxPrice,availability,sort,page,size);
     }
 
     @GetMapping("/seller/{sellerId}")

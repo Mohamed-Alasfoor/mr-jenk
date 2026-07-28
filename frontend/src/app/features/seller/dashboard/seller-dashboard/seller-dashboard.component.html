@@ -18,6 +18,16 @@
 
     <ng-container *ngIf="!isLoading">
       <section class="metrics-grid">
+        <article class="metric-card metric-card-accent glass">
+          <span class="metric-label">Revenue</span>
+          <strong>{{analytics?.revenue || 0 | currency}}</strong>
+          <p>{{analytics?.orderCount || 0}} related orders.</p>
+        </article>
+        <article class="metric-card glass">
+          <span class="metric-label">Best seller</span>
+          <strong>{{analytics?.topProducts?.length ? analytics!.topProducts[0].key : '—'}}</strong>
+          <p>{{analytics?.topProducts?.length ? analytics!.topProducts[0].value : 0}} units sold.</p>
+        </article>
         <article class="metric-card glass">
           <span class="metric-label">Active listings</span>
           <strong>{{ activeListingsCount }}</strong>

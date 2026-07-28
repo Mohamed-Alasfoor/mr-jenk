@@ -40,6 +40,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, exception.getMessage(), List.of());
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiErrorResponse> handleConflict(IllegalStateException exception) {
+        return build(HttpStatus.CONFLICT, exception.getMessage(), List.of());
+    }
+
     @ExceptionHandler({JwtException.class})
     public ResponseEntity<ApiErrorResponse> handleJwt(JwtException exception) {
         return build(HttpStatus.UNAUTHORIZED, "Invalid or expired token", List.of());

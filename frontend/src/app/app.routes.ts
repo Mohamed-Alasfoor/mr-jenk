@@ -33,6 +33,22 @@ export const routes: Routes = [
   },
 
   // Buyer Routes (CLIENT)
+  {
+    path: 'cart',
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['CLIENT'] },
+    loadComponent: () => import('./features/cart/cart.component').then(m => m.CartComponent)
+  },
+  {
+    path: 'orders',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/orders/orders.component').then(m => m.OrdersComponent)
+  },
+  {
+    path: 'orders/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/orders/orders.component').then(m => m.OrdersComponent)
+  },
   { 
     path: 'profile', 
     canActivate: [authGuard, roleGuard],
@@ -51,6 +67,7 @@ export const routes: Routes = [
       { path: 'products/new', loadComponent: () => import('./features/seller/products/product-form/product-form.component').then(m => m.ProductFormComponent) },
       { path: 'products/:id/edit', loadComponent: () => import('./features/seller/products/product-form/product-form.component').then(m => m.ProductFormComponent) },
       { path: 'media', loadComponent: () => import('./features/seller/media/seller-media/seller-media.component').then(m => m.SellerMediaComponent) },
+      { path: 'orders', loadComponent: () => import('./features/orders/orders.component').then(m => m.OrdersComponent) },
       { path: 'profile', loadComponent: () => import('./features/seller/profile/seller-profile/seller-profile.component').then(m => m.SellerProfileComponent) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]

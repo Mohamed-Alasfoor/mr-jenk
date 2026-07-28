@@ -348,4 +348,30 @@ The smoke test now covers:
 - MinIO is the default local object store so image binaries are not stored in MongoDB.
 - Kafka publishing is implemented but disabled by default so local development does not require a broker.
 - `backend/scripts/generate-dev-certs.ps1` can generate a shared PKCS12 certificate for local HTTPS runs.
-// test failing quality gatess
+
+## Buy-02 commerce features
+
+The marketplace now includes an `order-service` on port `8084`, routed through the gateway.
+
+- Product search: `GET /products/search` supports `keyword`, `category`, `minPrice`, `maxPrice`, `availability`, `sort`, `page`, and `size`.
+- Cart: authenticated clients can read their cart and add, update, or remove items.
+- Checkout: authenticated clients confirm an address and `PAY_ON_DELIVERY`; stock is reserved atomically before the order is saved and compensated if checkout fails.
+- Orders: buyers and related sellers can search by product/order ID, status, and date range. Buyers can cancel, redo, and remove cancelled orders. Sellers can advance valid status transitions.
+- Analytics: buyer spend/most-bought/top categories and seller revenue/best sellers/units sold are derived from immutable order snapshots.
+
+All mutation endpoints require JWT authentication. Buyer/seller ownership is enforced in the order service, and product stock changes use authenticated internal endpoints.
+
+## SonarQube improvements
+
+The Sonar configuration includes every backend service, Angular sources, unit-test reports, JaCoCo XML reports, and frontend LCOV coverage. The Jenkins pipeline blocks packaging and staging deployment until the SonarQube quality gate passes.
+
+For each pull request:
+
+1. Run `mvn clean verify` in `backend` and the Angular test/build commands in `frontend`.
+2. Review new Sonar issues for security, reliability, maintainability, duplication, and coverage.
+3. Fix actionable issues in the same feature branch. Document any accepted issue with its rule, rationale, owner, and follow-up date.
+4. Attach the green Jenkins build and Sonar quality-gate result to the PR.
+
+## Repository workflow
+
+Use `feature/<ticket>-<description>` branches and open a pull request for every change. Configure the remote `main` branch to require at least one approval, resolved conversations, and the green Jenkins status check. Disable force pushes and direct deletion of `main`. These host-side rules must be enabled in the Git provider because they cannot be enforced by repository files alone.
