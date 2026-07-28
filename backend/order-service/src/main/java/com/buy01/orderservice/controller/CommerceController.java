@@ -23,10 +23,10 @@ public class CommerceController {
         @RequestParam(required=false) @DateTimeFormat(iso=DateTimeFormat.ISO.DATE) LocalDate from,
         @RequestParam(required=false) @DateTimeFormat(iso=DateTimeFormat.ISO.DATE) LocalDate to){return service.list(user(a),query,status,from,to);}
     @GetMapping("/orders/{id}") public Order one(Authentication a,@PathVariable String id){return service.one(user(a),id);}
-    @PostMapping("/orders/{id}/cancel") @PreAuthorize("hasRole('CLIENT')") public Order cancel(Authentication a,@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,@PathVariable String id){return service.cancel(user(a).userId(),authorization,id);}
-    @PostMapping("/orders/{id}/redo") @PreAuthorize("hasRole('CLIENT')") public Order redo(Authentication a,@PathVariable String id){return service.redo(user(a).userId(),id);}
-    @DeleteMapping("/orders/{id}") @PreAuthorize("hasRole('CLIENT')") @ResponseStatus(HttpStatus.NO_CONTENT) public void removeOrder(Authentication a,@PathVariable String id){service.removeOrder(user(a).userId(),id);}
-    @PatchMapping("/orders/{id}/status") @PreAuthorize("hasRole('SELLER')") public Order status(Authentication a,@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,@PathVariable String id,@Valid @RequestBody StatusRequest r){return service.status(user(a),authorization,id,r.status());}
+    @PostMapping("/orders/{id}/cancel") @PreAuthorize("hasRole('CLIENT')") public Order cancel(Authentication a,@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,@PathVariable String id){return service.cancel(user(a),authorization,id);}
+    @PostMapping("/orders/{id}/redo") @PreAuthorize("hasRole('CLIENT')") public Order redo(Authentication a,@PathVariable String id){return service.redo(user(a),id);}
+    @DeleteMapping("/orders/{id}") @PreAuthorize("hasRole('CLIENT')") @ResponseStatus(HttpStatus.NO_CONTENT) public void removeOrder(Authentication a,@PathVariable String id){service.removeOrder(user(a),id);}
+    @PatchMapping("/orders/{id}/status") public Order status(Authentication a,@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,@PathVariable String id,@Valid @RequestBody StatusRequest r){return service.status(user(a),authorization,id,r.status());}
     @GetMapping("/analytics/me") public Map<String,Object> analytics(Authentication a){return service.analytics(user(a));}
     private AuthenticatedUser user(Authentication a){return (AuthenticatedUser)a.getPrincipal();}
 }

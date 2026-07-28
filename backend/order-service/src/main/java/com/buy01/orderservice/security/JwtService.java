@@ -12,6 +12,10 @@ public class JwtService {
     public JwtService(@Value("${security.jwt.secret}") String secret){key=Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));}
     public AuthenticatedUser parse(String token){
         Claims c=Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
-        return new AuthenticatedUser(c.getSubject(),c.get("email",String.class),c.get("role",String.class));
+        String userId=c.get("userId",String.class);
+        String email=c.getSubject();
+        String role=c.get("role",String.class);
+        if(userId==null||email==null||role==null)throw new io.jsonwebtoken.JwtException("Token is missing required claims");
+        return new AuthenticatedUser(userId,email,role);
     }
 }

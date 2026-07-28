@@ -50,11 +50,41 @@ class CommerceServiceTest {
         verify(orders,never()).save(any());
     }
 
+    @Test void relatedSellerCanConfirmPendingOrder() {
+        Order order=new Order();order.setId("o1");order.setBuyerId("buyer");order.setSellerIds(List.of("seller"));
+        order.setStatus(OrderStatus.PENDING);order.setCreatedAt(Instant.now());
+        when(orders.findById("o1")).thenReturn(Optional.of(order));
+        when(orders.save(order)).thenReturn(order);
+
+        Order result=service.status(new AuthenticatedUser("seller","seller@test","SELLER"),
+                "Bearer token","o1",OrderStatus.CONFIRMED);
+
+        assertEquals(OrderStatus.CONFIRMED,result.getStatus());
+        verify(orders).save(order);
+    }
+
     @Test void unrelatedUserCannotReadOrder() {
         Order order=new Order();order.setBuyerId("buyer");order.setSellerIds(List.of("seller"));
         when(orders.findById("o1")).thenReturn(Optional.of(order));
         assertThrows(SecurityException.class,()->service.one(
                 new AuthenticatedUser("stranger","x@test","CLIENT"),"o1"));
+    }
+
+    @Test void buyerCannotChangeOrderStatus() {
+        Order order=new Order();order.setId("o1");order.setBuyerId("buyer");order.setSellerIds(List.of("seller"));
+        order.setStatus(OrderStatus.PENDING);
+        assertThrows(SecurityException.class,()->service.status(
+                new AuthenticatedUser("buyer","buyer@test","CLIENT"),"Bearer token","o1",OrderStatus.CONFIRMED));
+        verify(orders,never()).save(any());
+    }
+
+    @Test void unrelatedSellerCannotChangeOrderStatus() {
+        Order order=new Order();order.setId("o1");order.setBuyerId("buyer");order.setSellerIds(List.of("seller"));
+        order.setStatus(OrderStatus.PENDING);
+        when(orders.findById("o1")).thenReturn(Optional.of(order));
+        assertThrows(SecurityException.class,()->service.status(
+                new AuthenticatedUser("other-seller","other@test","SELLER"),"Bearer token","o1",OrderStatus.CONFIRMED));
+        verify(orders,never()).save(any());
     }
 
     @Test void checkoutReleasesAlreadyReservedStockWhenAnotherReservationFails() {
@@ -67,5 +97,22 @@ class CommerceServiceTest {
 
         verify(products).release("Bearer token","p1",1);
         verify(orders,never()).save(any());
+    }
+
+    @Test void sellerAnalyticsExposeStableProductKeyAndValueFields() {
+        OrderItem item=new OrderItem();item.setSellerId("seller");item.setProductName("Keyboard");
+        item.setCategory("Electronics");item.setUnitPrice(new BigDecimal("25"));item.setQuantity(3);
+        Order order=new Order();order.setBuyerId("buyer");order.setSellerIds(List.of("seller"));
+        order.setItems(List.of(item));order.setStatus(OrderStatus.CONFIRMED);order.setCreatedAt(Instant.now());
+        when(orders.findBySellerIdsContainingOrderByCreatedAtDesc("seller")).thenReturn(List.of(order));
+
+        Map<String,Object> analytics=service.analytics(
+                new AuthenticatedUser("seller","seller@test","SELLER"));
+
+        List<?> topProducts=(List<?>)analytics.get("topProducts");
+        assertFalse(topProducts.isEmpty());
+        Map<?,?> bestSeller=(Map<?,?>)topProducts.get(0);
+        assertEquals("Keyboard",bestSeller.get("key"));
+        assertEquals(3,bestSeller.get("value"));
     }
 }

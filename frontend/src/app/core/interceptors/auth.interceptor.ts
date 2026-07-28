@@ -36,7 +36,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         }
       } else if (error.status === 403) {
         toastService.show('You do not have access to that action.', 'warning');
-        router.navigate(['/403']);
       } else if (error.status === 429) {
         toastService.show(
           error.error?.message || 'Too many requests. Please wait before trying again.',

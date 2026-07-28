@@ -48,7 +48,16 @@ public class CommerceService {
         return list(u,query,status,null,null);
     }
     public List<Order> list(AuthenticatedUser u,String query,OrderStatus status,LocalDate from,LocalDate to){
-        List<Order> source=u.isSeller()?orders.findBySellerIdsContainingOrderByCreatedAtDesc(u.userId()):orders.findByBuyerIdOrderByCreatedAtDesc(u.userId());
+        List<Order> source;
+        if(u.isSeller()){
+            source=orders.findBySellerIdsContainingOrderByCreatedAtDesc(u.userId());
+        }else{
+            Map<String,Order> unique=new LinkedHashMap<>();
+            orders.findByBuyerIdOrderByCreatedAtDesc(u.userId()).forEach(order->unique.put(order.getId(),order));
+            if(u.email()!=null&&!u.email().isBlank())orders.findByBuyerIdOrderByCreatedAtDesc(u.email()).forEach(order->unique.put(order.getId(),order));
+            source=new ArrayList<>(unique.values());
+            source.sort(Comparator.comparing(Order::getCreatedAt).reversed());
+        }
         String q=query==null?"":query.trim().toLowerCase();
         return source.stream().filter(o->status==null||o.getStatus()==status)
                 .filter(o->from==null||!o.getCreatedAt().isBefore(from.atStartOfDay().toInstant(ZoneOffset.UTC)))
@@ -56,14 +65,24 @@ public class CommerceService {
                 .filter(o->q.isEmpty()||o.getId().toLowerCase().contains(q)||o.getItems().stream().anyMatch(i->i.getProductName().toLowerCase().contains(q))).toList();
     }
     public Order one(AuthenticatedUser u,String id){Order o=orders.findById(id).orElseThrow(()->new NoSuchElementException("Order not found"));
-        if(!o.getBuyerId().equals(u.userId())&&!o.getSellerIds().contains(u.userId()))throw new SecurityException("Order access denied");return o;}
-    public Order cancel(String uid,String authorization,String id){Order o=one(new AuthenticatedUser(uid,"","CLIENT"),id);if(o.getStatus()!=OrderStatus.PENDING&&o.getStatus()!=OrderStatus.CONFIRMED)throw new IllegalStateException("Order can no longer be cancelled");releaseOrderStock(authorization,o);o.setStatus(OrderStatus.CANCELLED);o.setUpdatedAt(Instant.now());return orders.save(o);}
-    public void removeOrder(String uid,String id){Order o=one(new AuthenticatedUser(uid,"","CLIENT"),id);if(o.getStatus()!=OrderStatus.CANCELLED)throw new IllegalStateException("Only cancelled orders can be removed");orders.delete(o);}
-    public Order redo(String uid,String id){Order o=one(new AuthenticatedUser(uid,"","CLIENT"),id);Cart c=cart(uid);c.setItems(o.getItems().stream().map(i->new CartItem(i.getProductId(),i.getQuantity())).toList());c.setUpdatedAt(Instant.now());carts.save(c);return o;}
-    public Order status(AuthenticatedUser u,String authorization,String id,OrderStatus next){Order o=one(u,id);Map<OrderStatus,List<OrderStatus>> allowed=Map.of(OrderStatus.PENDING,List.of(OrderStatus.CONFIRMED,OrderStatus.CANCELLED),OrderStatus.CONFIRMED,List.of(OrderStatus.SHIPPED,OrderStatus.CANCELLED),OrderStatus.SHIPPED,List.of(OrderStatus.DELIVERED));if(!allowed.getOrDefault(o.getStatus(),List.of()).contains(next))throw new IllegalStateException("Invalid status transition");if(next==OrderStatus.CANCELLED)releaseOrderStock(authorization,o);o.setStatus(next);o.setUpdatedAt(Instant.now());return orders.save(o);}
+        boolean buyer=o.getBuyerId().equals(u.userId())||(u.email()!=null&&o.getBuyerId().equalsIgnoreCase(u.email()));
+        if(!buyer&&!o.getSellerIds().contains(u.userId()))throw new SecurityException("Order access denied");return o;}
+    public Order cancel(AuthenticatedUser user,String authorization,String id){Order o=one(user,id);if(o.getStatus()!=OrderStatus.PENDING)throw new IllegalStateException("Only pending orders can be cancelled");releaseOrderStock(authorization,o);o.setStatus(OrderStatus.CANCELLED);o.setUpdatedAt(Instant.now());return orders.save(o);}
+    public void removeOrder(AuthenticatedUser user,String id){Order o=one(user,id);if(o.getStatus()!=OrderStatus.CANCELLED)throw new IllegalStateException("Only cancelled orders can be removed");orders.delete(o);}
+    public Order redo(AuthenticatedUser user,String id){Order o=one(user,id);Cart c=cart(user.userId());c.setItems(o.getItems().stream().map(i->new CartItem(i.getProductId(),i.getQuantity())).toList());c.setUpdatedAt(Instant.now());carts.save(c);return o;}
+    public Order status(AuthenticatedUser u,String authorization,String id,OrderStatus next){
+        if(!u.isSeller())throw new SecurityException("Only sellers can manage order status");
+        Order o=orders.findById(id).orElseThrow(()->new NoSuchElementException("Order not found"));
+        if(!o.getSellerIds().contains(u.userId()))throw new SecurityException("Only a seller related to this order can manage it");
+        if(o.getStatus()!=OrderStatus.PENDING||(next!=OrderStatus.CONFIRMED&&next!=OrderStatus.CANCELLED))throw new IllegalStateException("Pending orders can only be confirmed or cancelled");
+        if(next==OrderStatus.CANCELLED)releaseOrderStock(authorization,o);
+        o.setStatus(next);o.setUpdatedAt(Instant.now());return orders.save(o);
+    }
     public Map<String,Object> analytics(AuthenticatedUser u){List<Order> valid=list(u,null,null).stream().filter(o->o.getStatus()!=OrderStatus.CANCELLED).toList();Map<String,Integer> units=new HashMap<>();Map<String,BigDecimal> categories=new HashMap<>();BigDecimal total=BigDecimal.ZERO;
         for(Order o:valid)for(OrderItem i:o.getItems()){if(u.isSeller()&&!i.getSellerId().equals(u.userId()))continue;total=total.add(i.subtotal());units.merge(i.getProductName(),i.getQuantity(),Integer::sum);categories.merge(i.getCategory()==null?"General":i.getCategory(),i.subtotal(),BigDecimal::add);}
-        Map<String,Object> result=new HashMap<>();result.put(u.isSeller()?"revenue":"totalSpent",total);result.put("orderCount",valid.size());result.put("topProducts",units.entrySet().stream().sorted(Map.Entry.<String,Integer>comparingByValue().reversed()).limit(5).toList());result.put("topCategories",categories.entrySet().stream().sorted(Map.Entry.<String,BigDecimal>comparingByValue().reversed()).limit(5).toList());return result;}
+        Map<String,Object> result=new HashMap<>();result.put(u.isSeller()?"revenue":"totalSpent",total);result.put("orderCount",valid.size());
+        result.put("topProducts",units.entrySet().stream().sorted(Map.Entry.<String,Integer>comparingByValue().reversed()).limit(5).map(entry->Map.of("key",entry.getKey(),"value",entry.getValue())).toList());
+        result.put("topCategories",categories.entrySet().stream().sorted(Map.Entry.<String,BigDecimal>comparingByValue().reversed()).limit(5).map(entry->Map.of("key",entry.getKey(),"value",entry.getValue())).toList());return result;}
     private Cart empty(String uid){Cart c=new Cart();c.setUserId(uid);c.setUpdatedAt(Instant.now());return c;}
     private void releaseOrderStock(String authorization,Order order){order.getItems().forEach(item->products.release(authorization,item.getProductId(),item.getQuantity()));}
 }

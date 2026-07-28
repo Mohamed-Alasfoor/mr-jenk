@@ -63,6 +63,10 @@ write_common_locations() {
     proxy_set_header X-Forwarded-Port $server_port;
   }
 
+  location = /index.html {
+    add_header Cache-Control "no-store, no-cache, must-revalidate" always;
+  }
+
   location / {
     try_files $uri $uri/ /index.html;
   }
