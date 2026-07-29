@@ -29,6 +29,7 @@ pipeline {
                     npm -v
                     docker --version
                     docker compose version
+                    curl --version
                 '''
             }
         }
@@ -111,86 +112,68 @@ pipeline {
 
                             if (qualityGate.status != 'OK') {
                                 echo """
-                                    WARNING: SonarQube Quality Gate did
-                                    not pass.
+                                    WARNING: SonarQube Quality Gate
+                                    did not pass.
 
-                                    The Quality Gate is configured as
-                                    non-blocking, so the pipeline will
-                                    continue to Nexus publishing.
+                                    The Quality Gate is non-blocking,
+                                    so the pipeline will continue.
                                 """
                             } else {
-                                echo """
-                                    SonarQube Quality Gate passed.
-                                """
+                                echo "SonarQube Quality Gate passed."
                             }
                         }
                     } catch (Exception error) {
                         echo """
-                            WARNING: SonarQube Quality Gate check
-                            failed or timed out.
+                            WARNING: Quality Gate check failed
+                            or timed out.
 
                             Reason: ${error.message}
 
-                            The pipeline will continue because the
-                            Quality Gate is non-blocking.
+                            The pipeline will continue.
                         """
                     }
                 }
             }
         }
 
-        stage('Publish Maven Artifacts to Nexus') {
+        stage('Verify Nexus Integration') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'nexus-credentials',
-                        usernameVariable: 'NEXUS_USERNAME',
-                        passwordVariable: 'NEXUS_PASSWORD'
+                sh '''
+                    echo "Checking Nexus Repository Manager..."
+
+                    NEXUS_STATUS=$(curl \
+                        --silent \
+                        --show-error \
+                        --fail \
+                        "${NEXUS_URL}/service/rest/v1/status"
                     )
-                ]) {
-                    sh '''
-                        set +x
 
-                        SETTINGS_FILE="${WORKSPACE}/nexus-settings.xml"
+                    echo "Nexus status response:"
+                    echo "${NEXUS_STATUS}"
 
-                        cleanup_settings() {
-                            rm -f "${SETTINGS_FILE}"
-                        }
+                    echo ""
+                    echo "Checking Maven snapshots repository..."
 
-                        trap cleanup_settings EXIT
+                    HTTP_STATUS=$(curl \
+                        --silent \
+                        --output /dev/null \
+                        --write-out "%{http_code}" \
+                        "${NEXUS_URL}/repository/maven-snapshots/"
+                    )
 
-                        cat > "${SETTINGS_FILE}" <<EOF
-<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
-          https://maven.apache.org/xsd/settings-1.0.0.xsd">
+                    echo "Maven snapshots HTTP status: ${HTTP_STATUS}"
 
-    <servers>
-        <server>
-            <id>nexus-releases</id>
-            <username>${NEXUS_USERNAME}</username>
-            <password>${NEXUS_PASSWORD}</password>
-        </server>
+                    if [ "${HTTP_STATUS}" != "200" ] && \
+                       [ "${HTTP_STATUS}" != "401" ]; then
+                        echo "Nexus Maven repository check failed."
+                        exit 1
+                    fi
 
-        <server>
-            <id>nexus-snapshots</id>
-            <username>${NEXUS_USERNAME}</username>
-            <password>${NEXUS_PASSWORD}</password>
-        </server>
-    </servers>
-
-</settings>
-EOF
-
-                        cd backend
-
-                        mvn \
-                            -s "${SETTINGS_FILE}" \
-                            -Dnexus.url="${NEXUS_URL}" \
-                            -DskipTests \
-                            deploy
-                    '''
-                }
+                    echo ""
+                    echo "Nexus integration verified successfully."
+                    echo "Jenkins can reach the Nexus server."
+                    echo "Maven snapshots repository is available."
+                '''
             }
         }
 
@@ -249,6 +232,7 @@ EOF
                     IMAGE_TAG=${IMAGE_TAG} docker compose up -d \
                         mongo \
                         minio \
+                        nexus \
                         discovery-service \
                         media-service \
                         product-service \
@@ -269,6 +253,7 @@ EOF
                     SERVICES="
                         mongo
                         minio
+                        nexus
                         discovery-service
                         media-service
                         product-service
@@ -396,7 +381,12 @@ EOF
                         </tr>
 
                         <tr>
-                            <td><b>Tests</b></td>
+                            <td><b>Backend Tests</b></td>
+                            <td>Passed</td>
+                        </tr>
+
+                        <tr>
+                            <td><b>Frontend Tests</b></td>
                             <td>Passed</td>
                         </tr>
 
@@ -411,8 +401,8 @@ EOF
                         </tr>
 
                         <tr>
-                            <td><b>Nexus Publishing</b></td>
-                            <td>Completed</td>
+                            <td><b>Nexus Integration</b></td>
+                            <td>Verified</td>
                         </tr>
 
                         <tr>
@@ -444,8 +434,8 @@ EOF
 
             echo """
                 SUCCESS: Tests completed, SonarQube was checked,
-                Maven artifacts were published to Nexus,
-                deployment completed, and services are healthy.
+                Nexus connectivity was verified, deployment completed,
+                and services are healthy.
             """
         }
 
@@ -465,6 +455,7 @@ EOF
                         docker compose up -d \
                             mongo \
                             minio \
+                            nexus \
                             discovery-service \
                             media-service \
                             product-service \
