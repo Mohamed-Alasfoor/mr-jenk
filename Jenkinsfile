@@ -7,6 +7,7 @@ pipeline {
 
     environment {
         IMAGE_TAG = "${BUILD_NUMBER}"
+        NEXUS_URL = "http://nexus:8081"
         STATE_DIR = "/var/jenkins_home/deployment-state/mr-jenk"
         PREVIOUS_IMAGE_TAG = ""
         DEPLOYMENT_STARTED = "false"
@@ -98,6 +99,59 @@ pipeline {
             steps {
                 timeout(time: 10, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Publish Maven Artifacts to Nexus') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'nexus-credentials',
+                        usernameVariable: 'NEXUS_USERNAME',
+                        passwordVariable: 'NEXUS_PASSWORD'
+                    )
+                ]) {
+                    sh '''
+                        set +x
+
+                        SETTINGS_FILE="${WORKSPACE}/nexus-settings.xml"
+
+                        cleanup_settings() {
+                            rm -f "${SETTINGS_FILE}"
+                        }
+
+                        trap cleanup_settings EXIT
+
+                        cat > "${SETTINGS_FILE}" <<EOF
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+          https://maven.apache.org/xsd/settings-1.0.0.xsd">
+    <servers>
+        <server>
+            <id>nexus-releases</id>
+            <username>${NEXUS_USERNAME}</username>
+            <password>${NEXUS_PASSWORD}</password>
+        </server>
+
+        <server>
+            <id>nexus-snapshots</id>
+            <username>${NEXUS_USERNAME}</username>
+            <password>${NEXUS_PASSWORD}</password>
+        </server>
+    </servers>
+</settings>
+EOF
+
+                        cd backend
+
+                        mvn \
+                            -s "${SETTINGS_FILE}" \
+                            -Dnexus.url="${NEXUS_URL}" \
+                            -DskipTests \
+                            deploy
+                    '''
                 }
             }
         }
@@ -300,6 +354,10 @@ pipeline {
                             <td>Passed</td>
                         </tr>
                         <tr>
+                            <td><b>Nexus Publishing</b></td>
+                            <td>Completed</td>
+                        </tr>
+                        <tr>
                             <td><b>Deployment</b></td>
                             <td>Completed</td>
                         </tr>
@@ -325,6 +383,7 @@ pipeline {
 
             echo """
                 SUCCESS: Tests passed, Quality Gate passed,
+                Maven artifacts were published to Nexus,
                 deployment completed, and services are healthy.
             """
         }

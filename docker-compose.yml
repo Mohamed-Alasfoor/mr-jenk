@@ -279,6 +279,26 @@ services:
       - sonarqube-extensions:/opt/sonarqube/extensions
       - sonarqube-logs:/opt/sonarqube/logs
 
+  nexus:
+    image: sonatype/nexus3:3.93.2
+    container_name: nexus
+    restart: unless-stopped
+    ports:
+      - "8085:8081"
+      - "8086:8082"
+      - "8087:8083"
+      - "8088:8084"
+    volumes:
+      - nexus-data:/nexus-data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -fsS http://localhost:8081/service/rest/v1/status > /dev/null || exit 1
+      interval: 20s
+      timeout: 10s
+      retries: 15
+      start_period: 120s
+
 volumes:
   mongo-data:
   minio-data:
@@ -288,3 +308,4 @@ volumes:
   sonarqube-data:
   sonarqube-extensions:
   sonarqube-logs:
+  nexus-data:
