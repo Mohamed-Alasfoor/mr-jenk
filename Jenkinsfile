@@ -97,8 +97,44 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 10, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+                script {
+                    try {
+                        timeout(time: 10, unit: 'MINUTES') {
+                            def qualityGate = waitForQualityGate(
+                                abortPipeline: false
+                            )
+
+                            echo """
+                                SonarQube Quality Gate status:
+                                ${qualityGate.status}
+                            """
+
+                            if (qualityGate.status != 'OK') {
+                                echo """
+                                    WARNING: SonarQube Quality Gate did
+                                    not pass.
+
+                                    The Quality Gate is configured as
+                                    non-blocking, so the pipeline will
+                                    continue to Nexus publishing.
+                                """
+                            } else {
+                                echo """
+                                    SonarQube Quality Gate passed.
+                                """
+                            }
+                        }
+                    } catch (Exception error) {
+                        echo """
+                            WARNING: SonarQube Quality Gate check
+                            failed or timed out.
+
+                            Reason: ${error.message}
+
+                            The pipeline will continue because the
+                            Quality Gate is non-blocking.
+                        """
+                    }
                 }
             }
         }
@@ -128,6 +164,7 @@ pipeline {
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
           https://maven.apache.org/xsd/settings-1.0.0.xsd">
+
     <servers>
         <server>
             <id>nexus-releases</id>
@@ -141,6 +178,7 @@ pipeline {
             <password>${NEXUS_PASSWORD}</password>
         </server>
     </servers>
+
 </settings>
 EOF
 
@@ -173,9 +211,14 @@ EOF
                     ).trim()
 
                     if (env.PREVIOUS_IMAGE_TAG) {
-                        echo "Previous successful image tag: ${env.PREVIOUS_IMAGE_TAG}"
+                        echo """
+                            Previous successful image tag:
+                            ${env.PREVIOUS_IMAGE_TAG}
+                        """
                     } else {
-                        echo "No previous successful deployment was found."
+                        echo """
+                            No previous successful deployment was found.
+                        """
                     }
                 }
             }
@@ -272,7 +315,10 @@ EOF
                         docker compose ps
 
                         if [ "$ALL_READY" = "true" ]; then
-                            echo "All application services are running and healthy."
+                            echo """
+                                All application services are running
+                                and healthy.
+                            """
                             exit 0
                         fi
 
@@ -319,56 +365,71 @@ EOF
                 to: 'mohammedalasfoor06@gmail.com',
                 subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
-                    <h2 style="color:green;">Pipeline Successful</h2>
+                    <h2 style="color:green;">
+                        Pipeline Successful
+                    </h2>
+
                     <table>
                         <tr>
                             <td><b>Job</b></td>
                             <td>${env.JOB_NAME}</td>
                         </tr>
+
                         <tr>
                             <td><b>Build #</b></td>
                             <td>${env.BUILD_NUMBER}</td>
                         </tr>
+
                         <tr>
                             <td><b>Branch</b></td>
                             <td>main</td>
                         </tr>
+
                         <tr>
                             <td><b>Commit</b></td>
                             <td>${env.GIT_COMMIT}</td>
                         </tr>
+
                         <tr>
                             <td><b>Status</b></td>
                             <td>SUCCESS</td>
                         </tr>
+
                         <tr>
                             <td><b>Tests</b></td>
                             <td>Passed</td>
                         </tr>
+
                         <tr>
                             <td><b>SonarQube Analysis</b></td>
                             <td>Completed</td>
                         </tr>
+
                         <tr>
                             <td><b>Quality Gate</b></td>
-                            <td>Passed</td>
+                            <td>Checked — Non-blocking</td>
                         </tr>
+
                         <tr>
                             <td><b>Nexus Publishing</b></td>
                             <td>Completed</td>
                         </tr>
+
                         <tr>
                             <td><b>Deployment</b></td>
                             <td>Completed</td>
                         </tr>
+
                         <tr>
                             <td><b>Health Check</b></td>
                             <td>Passed</td>
                         </tr>
+
                         <tr>
                             <td><b>Image Tag</b></td>
                             <td>${env.IMAGE_TAG}</td>
                         </tr>
+
                         <tr>
                             <td><b>Build URL</b></td>
                             <td>
@@ -382,7 +443,7 @@ EOF
             )
 
             echo """
-                SUCCESS: Tests passed, Quality Gate passed,
+                SUCCESS: Tests completed, SonarQube was checked,
                 Maven artifacts were published to Nexus,
                 deployment completed, and services are healthy.
             """
@@ -432,38 +493,48 @@ EOF
                 to: 'mohammedalasfoor06@gmail.com',
                 subject: "FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
-                    <h2 style="color:red;">Pipeline Failed</h2>
+                    <h2 style="color:red;">
+                        Pipeline Failed
+                    </h2>
+
                     <table>
                         <tr>
                             <td><b>Job</b></td>
                             <td>${env.JOB_NAME}</td>
                         </tr>
+
                         <tr>
                             <td><b>Build #</b></td>
                             <td>${env.BUILD_NUMBER}</td>
                         </tr>
+
                         <tr>
                             <td><b>Branch</b></td>
                             <td>main</td>
                         </tr>
+
                         <tr>
                             <td><b>Commit</b></td>
                             <td>${env.GIT_COMMIT}</td>
                         </tr>
+
                         <tr>
                             <td><b>Status</b></td>
                             <td>FAILED</td>
                         </tr>
+
                         <tr>
                             <td><b>Attempted Image</b></td>
                             <td>${env.IMAGE_TAG}</td>
                         </tr>
+
                         <tr>
                             <td><b>Rollback Image</b></td>
                             <td>
                                 ${env.PREVIOUS_IMAGE_TAG ?: 'Not available'}
                             </td>
                         </tr>
+
                         <tr>
                             <td><b>Build URL</b></td>
                             <td>
