@@ -375,3 +375,4 @@ For each pull request:
 ## Repository workflow
 
 Use `feature/<ticket>-<description>` branches and open a pull request for every change. Configure the remote `main` branch to require at least one approval, resolved conversations, and the green Jenkins status check. Disable force pushes and direct deletion of `main`. These host-side rules must be enabled in the Git provider because they cannot be enforced by repository files alone.
+//nexustest
